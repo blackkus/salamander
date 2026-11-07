@@ -1,37 +1,20 @@
 # -*- coding: utf-8 -*-
-# Cree les Input Actions IA_Sprint / IA_Crouch et les mappe dans IMC_Default.
-# Lancer via : UnrealEditor-Cmd.exe <projet> -run=pythonscript -script=<ce fichier> -log
+# Cree les Input Actions IA_Sprint / IA_Crouch. En 5.8, value_type est read-only :
+# il est fixe par le factory a la creation (BOOLEAN par defaut pour InputAction_Factory).
 import unreal
 
-def get_factory():
-    for name in ('InputActionFactoryNew', 'InputActionFactory'):
-        f = getattr(unreal, name, None)
-        if f is not None:
-            return f()
-    raise RuntimeError('Aucun InputActionFactory trouve')
-
-def ensure_input_action(path, value_type):
+def ensure_input_action(name):
+    path = '/Game/Input/Actions/' + name
     if unreal.EditorAssetLibrary.does_asset_exist(path):
-        return unreal.load_asset(path)
-    action = unreal.EditorAssetLibrary.create_asset(path, '/Game/Input/Actions', unreal.InputAction, get_factory())
-    vt_enum = getattr(unreal, 'InputActionValueType', None) or unreal.EInputActionValueType
-    setattr(action, 'value_type' if hasattr(action, 'value_type') else 'ValueType', getattr(vt_enum, value_type))
-    unreal.EditorAssetLibrary.save_asset(action)
+        action = unreal.load_asset(path)
+    else:
+        at = unreal.AssetToolsHelpers.get_asset_tools()
+        factory = unreal.InputAction_Factory()
+        action = at.create_asset(name, '/Game/Input/Actions', unreal.InputAction, factory)
+        unreal.EditorAssetLibrary.save_asset(path)
+    unreal.log('InputAction %s value_type=%s' % (name, action.value_type))
     return action
 
-def map_key_once(imc, action, key):
-    for m in imc.mappings:
-        if m.action == action and m.key == key:
-            return
-    trigger = unreal.InputTriggerPressed()
-    imc.map_key(action, key, [], [trigger])
-
-ia_sprint = ensure_input_action('/Game/Input/Actions/IA_Sprint', 'BOOLEAN')
-ia_crouch = ensure_input_action('/Game/Input/Actions/IA_Crouch', 'BOOLEAN')
-
-imc = unreal.load_asset('/Game/Input/IMC_Default')
-map_key_once(imc, ia_sprint, unreal.Keys.LEFT_SHIFT)
-map_key_once(imc, ia_crouch, unreal.Keys.LEFT_CONTROL)
-unreal.EditorAssetLibrary.save_asset(imc)
-
-unreal.log('IA_Sprint et IA_Crouch crees et mappees dans IMC_Default (LeftShift / LeftControl)')
+ensure_input_action('IA_Sprint')
+ensure_input_action('IA_Crouch')
+unreal.log('IA_Sprint et IA_Crouch OK dans /Game/Input/Actions')

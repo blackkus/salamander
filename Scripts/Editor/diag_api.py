@@ -1,0 +1,25 @@
+# -*- coding: utf-8 -*-
+import unreal
+def p(*a):
+    unreal.log('DIAG ' + ' '.join(str(x) for x in a))
+
+p('EditorAssetLibrary create-like:', [m for m in dir(unreal.EditorAssetLibrary) if 'creat' in m.lower() or 'save' in m.lower() or 'exist' in m.lower() or 'duplicate' in m.lower()])
+at = unreal.AssetToolsHelpers.get_asset_tools()
+p('AssetTools create-like:', [m for m in dir(at) if 'creat' in m.lower()])
+p('InputActionFactory:', hasattr(unreal, 'InputActionFactory'), 'InputActionFactoryNew:', hasattr(unreal, 'InputActionFactoryNew'))
+vt = getattr(unreal, 'InputActionValueType', None)
+p('InputActionValueType:', vt is not None and [m for m in dir(vt) if not m.startswith('_')][:12])
+ia = unreal.load_asset('/Game/Input/Actions/IA_Move')
+p('IA_Move value_type attr:', hasattr(ia, 'value_type'), 'ValueType:', hasattr(ia, 'ValueType'))
+imc = unreal.load_asset('/Game/Input/IMC_Default')
+p('imc map_key:', hasattr(imc, 'map_key'), 'mappings:', hasattr(imc, 'mappings'), type(imc.mappings).__name__)
+p('Keys LEFT_SHIFT:', hasattr(unreal.Keys, 'LEFT_SHIFT'), 'LEFT_CONTROL:', hasattr(unreal.Keys, 'LEFT_CONTROL'))
+p('InputTriggerPressed:', hasattr(unreal, 'InputTriggerPressed'))
+p('EditorLevelLibrary:', hasattr(unreal.EditorLevelLibrary, 'spawn_actor_from_class'), hasattr(unreal.EditorLevelLibrary, 'load_level'), hasattr(unreal.EditorLevelLibrary, 'save_current_level'))
+p('MEL create/connect/recompile:', [m for m in dir(unreal.MaterialEditingLibrary) if 'creat' in m.lower() or 'connect' in m.lower() or 'recompil' in m.lower()])
+p('factories Material/Level:', hasattr(unreal, 'MaterialFactoryNew'), hasattr(unreal, 'LevelFactory'))
+p('save_asset:', hasattr(unreal.EditorAssetLibrary, 'save_asset'), 'does_asset_exist:', hasattr(unreal.EditorAssetLibrary, 'does_asset_exist'))
+p('StaticMeshActor:', hasattr(unreal, 'StaticMeshActor'), 'PlayerStart:', hasattr(unreal, 'PlayerStart'), 'DirectionalLight:', hasattr(unreal, 'DirectionalLight'), 'SkyLight:', hasattr(unreal, 'SkyLight'), 'SkyAtmosphere:', hasattr(unreal, 'SkyAtmosphere'))
+p('ComponentMobility:', hasattr(unreal, 'ComponentMobility'))
+p('MaterialExpressionVectorParameter:', hasattr(unreal, 'MaterialExpressionVectorParameter'), 'MaterialExpressionConstant3Vector:', hasattr(unreal, 'MaterialExpressionConstant3Vector'))
+p('MaterialProperty MP_BASE_COLOR:', hasattr(unreal.MaterialProperty, 'MP_BASE_COLOR'))

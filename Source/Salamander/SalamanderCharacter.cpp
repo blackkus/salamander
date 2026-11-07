@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "InputTriggers.h"
 #include "SalamanderCharacterMovementComponent.h"
 
 ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectInitializer)
@@ -98,6 +99,21 @@ void ASalamanderCharacter::PossessedBy(AController* NewController)
 				if (DefaultMappingContext)
 				{
 					Subsystem->AddMappingContext(DefaultMappingContext, 0);
+
+					// IA_Sprint / IA_Crouch sont créées par script éditeur ; le mapping
+					// clavier est ajouté ici en code (idempotent grâce à UnmapKey).
+					if (SprintAction)
+					{
+						DefaultMappingContext->UnmapKey(SprintAction, EKeys::LeftShift);
+						FEnhancedActionKeyMapping& SprintMapping = DefaultMappingContext->MapKey(SprintAction, EKeys::LeftShift);
+						SprintMapping.Triggers.Add(NewObject<UInputTriggerPressed>(DefaultMappingContext));
+					}
+					if (CrouchAction)
+					{
+						DefaultMappingContext->UnmapKey(CrouchAction, EKeys::LeftControl);
+						FEnhancedActionKeyMapping& CrouchMapping = DefaultMappingContext->MapKey(CrouchAction, EKeys::LeftControl);
+						CrouchMapping.Triggers.Add(NewObject<UInputTriggerPressed>(DefaultMappingContext));
+					}
 				}
 			}
 		}
