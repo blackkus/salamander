@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Cree les Input Actions IA_Sprint / IA_Crouch. En 5.8, value_type est read-only :
-# il est fixe par le factory a la creation (BOOLEAN par defaut pour InputAction_Factory).
+# Creates the IA_Sprint / IA_Crouch Input Actions. En 5.8, value_type is read-only:
+# it is set by the factory at creation (BOOLEAN by default for InputAction_Factory).
 import unreal
 
 def ensure_input_action(name):
@@ -17,4 +17,4 @@ def ensure_input_action(name):
 
 ensure_input_action('IA_Sprint')
 ensure_input_action('IA_Crouch')
-unreal.log('IA_Sprint et IA_Crouch OK dans /Game/Input/Actions')
+unreal.log('IA_Sprint and IA_Crouch OK in /Game/Input/Actions')

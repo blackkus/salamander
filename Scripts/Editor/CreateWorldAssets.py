@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Cree M_PlayerColor (parametre vectoriel BodyColor), M_SolGreen, et la map /Game/Maps/Monde_Test
-# (sol vert, SkyAtmosphere, soleil, SkyLight, PlayerStart). Idempotent.
+# Creates M_PlayerColor (BodyColor vector param), M_SolGreen, and the /Game/Maps/Monde_Test map
+# (green floor, SkyAtmosphere, sun, SkyLight, PlayerStart). Idempotent.
 # Lancer via : UnrealEditor-Cmd.exe <projet> -run=pythonscript -script=<ce fichier> -log -unattended -nullrhi
 import unreal
 
@@ -14,7 +14,7 @@ def create_asset(path, package_path, cls, factory):
 
 def build_player_color(mat):
     lib = unreal.MaterialEditingLibrary
-    # ParameterName n'est pas expose en Python 5.8 : helper C++.
+    # ParameterName is not exposed in Python 5.8: C++ helper.
     node = unreal.SalamanderMaterialLib.create_vector_parameter_node(mat, 'BodyColor', unreal.LinearColor(0.8, 0.8, 0.8, 1.0))
     lib.connect_material_property(node, '', unreal.MaterialProperty.MP_BASE_COLOR)
 
@@ -57,4 +57,4 @@ spawn(unreal.SkyLight, unreal.Vector(0, 0, 2000), unreal.Rotator())
 spawn(unreal.SkyAtmosphere, unreal.Vector(0, 0, 0), unreal.Rotator())
 
 les.save_current_level()
-unreal.log('Monde_Test OK : sol vert, ciel bleu, soleil, SkyLight, PlayerStart + M_PlayerColor/M_SolGreen')
+unreal.log('Monde_Test OK: green floor, blue sky, sun, SkyLight, PlayerStart + M_PlayerColor/M_SolGreen')

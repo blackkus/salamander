@@ -24,16 +24,16 @@ void SLoginWidget::Construct(const FArguments& InArgs)
 		.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 		[
 			SNew(SVerticalBox)
-			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ Label("IP du serveur (ex 127.0.0.1 ou IP locale du PC serveur)") ]
+			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ Label("Server IP (ex 127.0.0.1 or server PC LAN IP)") ]
 			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ SAssignNew(IpBox, SEditableTextBox).Text(FText::FromString("127.0.0.1")) ]
-			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ Label("Pseudo (16 caracteres max)") ]
+			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ Label("Pseudo (16 chars max)") ]
 			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ SAssignNew(PseudoBox, SEditableTextBox) ]
-			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ Label("Couleur hex (ex FF8800)") ]
+			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ Label("Color hex (ex FF8800)") ]
 			+ SVerticalBox::Slot().AutoHeight().Padding(4.f)[ SAssignNew(ColorBox, SEditableTextBox).Text(FText::FromString("FF8800")) ]
 			+ SVerticalBox::Slot().AutoHeight().Padding(12.f)
 			[
 				SNew(SButton)
-				.Text(FText::FromString("Se connecter"))
+				.Text(FText::FromString("Connect"))
 				.HAlign(HAlign_Center)
 				.OnClicked(this, &SLoginWidget::OnConnectClicked)
 			]

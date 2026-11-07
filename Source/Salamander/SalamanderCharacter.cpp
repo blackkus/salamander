@@ -10,7 +10,8 @@
 #include "InputTriggers.h"
 #include "SalamanderCharacterMovementComponent.h"
 #include "SalamanderPlayerState.h"
-#include "StatsComponent.h"
+#include "AbilitySystemComponent.h"
+#include "GE_InitStats.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "TimerManager.h"
@@ -34,7 +35,7 @@ ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectIniti
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -90.f), FRotator(0.f, -90.f, 0.f));
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
-	// Mesh et AnimBP du template Third Person (assets existants, non modifiés).
+	// Mesh and AnimBP from the Third Person template (existing assets, untouched).
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshAsset(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple"));
 	if (MeshAsset.Succeeded())
 	{
@@ -47,7 +48,7 @@ ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectIniti
 		GetMesh()->SetAnimInstanceClass(AnimAsset.Object->GeneratedClass);
 	}
 
-	// Assets d'input du template + IA_Sprint / IA_Crouch (creés par script éditeur).
+	// Input assets from the template + IA_Sprint / IA_Crouch (created by editor script).
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCAsset(TEXT("/Game/Input/IMC_Default"));
 	if (IMCAsset.Succeeded())
 	{
@@ -95,6 +96,26 @@ void ASalamanderCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	// GAS: bind the PlayerState ASC to this pawn (owner=PlayerState, avatar=pawn).
+	if (ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetASC())
+		{
+			ASC->InitAbilityActorInfo(PS, this);
+			if (HasAuthority())
+			{
+				// Init attributes (Health/MaxHealth = 100) via GameplayEffect, server only.
+				FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+				Ctx.AddSourceObject(this);
+				FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(UGE_InitStats::StaticClass(), 1.f, Ctx);
+				if (Spec.IsValid())
+				{
+					ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+				}
+			}
+		}
+	}
+
 	if (APlayerController* PC = Cast<APlayerController>(NewController))
 	{
 		if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
@@ -105,8 +126,8 @@ void ASalamanderCharacter::PossessedBy(AController* NewController)
 				{
 					Subsystem->AddMappingContext(DefaultMappingContext, 0);
 
-					// IA_Sprint / IA_Crouch sont créées par script éditeur ; le mapping
-					// clavier est ajouté ici en code (idempotent grâce à UnmapKey).
+					// IA_Sprint / IA_Crouch are created by an editor script; the key mapping
+					// is added here in code (idempotent thanks to UnmapKey).
 					if (SprintAction)
 					{
 						DefaultMappingContext->UnmapKey(SprintAction, EKeys::LeftShift);
@@ -234,9 +255,13 @@ void ASalamanderCharacter::StopCrouch()
 void ASalamanderCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	if (const ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
+	if (ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
 	{
-		UE_LOG(LogTemp, Log, TEXT("[Char] PlayerState recu: Name=%s Level=%d"), *PS->PlayerName, PS->Level);
+		if (UAbilitySystemComponent* ASC = PS->GetASC())
+		{
+			ASC->InitAbilityActorInfo(PS, this); // client side, on PlayerState replication
+		}
+		UE_LOG(LogTemp, Log, TEXT("[Char] PlayerState received: Name=%s Level=%d"), *PS->PlayerName, PS->Level);
 	}
 }
 
@@ -244,15 +269,7 @@ void ASalamanderCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Le composant de stats est attaché côté serveur pour chaque pawn (spawn initial ET respawn).
-	if (HasAuthority() && FindComponentByClass<UStatsComponent>() == nullptr)
-	{
-		UStatsComponent* Stats = NewObject<UStatsComponent>(this, TEXT("StatsComponent"));
-		AddInstanceComponent(Stats);
-		Stats->RegisterComponent();
-	}
-
-	// Tests CLI (client uniquement) : simuler sprint / accroupi automatiquement apres connexion.
+	// CLI tests (client only): auto play sprint / crouch after connecting.
 	if (!HasAuthority())
 	{
 		bool bSprint = false, bCrouch = false;

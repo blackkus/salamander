@@ -4,8 +4,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "SalamanderCharacterMovementComponent.generated.h"
 
-// Move custom : transporte le flag "sprint" dans les bits compressés,
-// comme bWantsToCrouch, pour que la vitesse de sprint soit prédite côté client.
+// Custom move: carries the "sprint" flag in the compressed bits,
+// like bWantsToCrouch, so the sprint speed is predicted on the client.
 class FSavedMove_Salamander : public FSavedMove_Character
 {
 public:
@@ -36,16 +36,16 @@ class SALAMANDER_API USalamanderCharacterMovementComponent : public UCharacterMo
 	GENERATED_BODY()
 
 public:
-	// Vitesse max en sprint (marche/course de base = MaxWalkSpeed, inchangé).
+	// Max speed while sprinting (base walk/run = MaxWalkSpeed, unchanged).
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sprint")
 	float SprintMaxWalkSpeed = 1000.f;
 
-	// Prédictible : packé dans FSavedMove_Salamander et rejoué côté client et serveur.
+	// Predicted: packed into FSavedMove_Salamander and replayed on client and server.
 	bool bSprinting = false;
 
 	virtual FNetworkPredictionData_Client* GetPredictionData_Client() const override;
 	virtual float GetMaxSpeed() const override;
 
-	// Loggue la magnitude de chaque correction serveur -> client (test de prediction).
+	// Logs the magnitude of each server -> client correction (prediction test).
 	virtual void OnClientCorrectionReceived(FNetworkPredictionData_Client_Character& ClientData, float TimeStamp, FVector NewLocation, FVector NewVelocity, UPrimitiveComponent* NewBase, FName NewBaseBoneName, bool bHasBase, bool bBaseRelativePosition, uint8 ServerMovementMode, FVector ServerGravityDirection) override;
 };

@@ -5,11 +5,19 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 #include "Net/UnrealNetwork.h"
+#include "SalamanderAttributeSet.h"
 
 ASalamanderPlayerState::ASalamanderPlayerState()
 {
 	Level = 1;
 	ColorRgb = FLinearColor(0.8f, 0.8f, 0.8f, 1.f);
+
+	// GAS: ASC + AttributeSet on the PlayerState, Mixed replication (players).
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<USalamanderAttributeSet>(TEXT("AttributeSet"));
 }
 
 void ASalamanderPlayerState::BeginPlay()
@@ -50,11 +58,10 @@ void ASalamanderPlayerState::ApplyColorToPawn()
 		return;
 	}
 
-	// M_PlayerColor a un parametre vectoriel "BodyColor" (cree par script editeur).
 	UMaterialInterface* BaseMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_PlayerColor"));
 	if (BaseMat == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[PS] M_PlayerColor introuvable"));
+		UE_LOG(LogTemp, Warning, TEXT("[PS] M_PlayerColor not found"));
 		return;
 	}
 

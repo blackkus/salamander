@@ -1,16 +1,16 @@
 @echo off
 setlocal
 REM ============================================================
-REM  Serveur dedie Salamander (jalon 1)
-REM  A VALIDER :
-REM   - le serveur lance ici l'executable de l'EDITEUR en mode -server -game
-REM     (pas un binaire dedie package : celui-ci exige un moteur compile
-REM     depuis les sources, hors perimetre pour l'instant).
-REM   - port UDP 7777 : a ouvrir/rediriger sur la box pour jouer depuis
-REM     l'exterieur (ou via VPN type Tailscale sur le meme reseau virtuel).
+REM  Salamander dedicated server (milestone 1)
+REM  TO VALIDATE:
+REM   - the server runs the EDITOR executable in -server -game mode
+REM     (not a packaged dedicated binary: that requires a source-built engine,
+REM     out of scope for now).
+REM   - UDP port 7777: forward it on your router to play from outside
+REM     (or use a VPN like Tailscale on the same virtual network).
 REM ============================================================
 
-REM ===== CHEMINS A ADAPTER =====
+REM ===== PATHS TO EDIT =====
 set UE_DIR=C:\Games\UE_5.8
 set PROJECT_DIR=C:\Users\Blackkus\Documents\Unreal Projects\Salamander
 REM =============================
@@ -20,5 +20,5 @@ set PROJECT=%PROJECT_DIR%\Salamander.uproject
 set MAP=/Game/Maps/Monde_Test
 set PORT=7777
 
-echo Lancement du serveur dedie : carte %MAP%, port UDP %PORT%
+echo Starting dedicated server: map %MAP%, UDP port %PORT%
 "%EDITOR_EXE%" "%PROJECT%" -server -game -log -PORT=%PORT% "%MAP%?listen"

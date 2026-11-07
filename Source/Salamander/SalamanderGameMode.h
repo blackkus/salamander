@@ -18,12 +18,12 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 
-	// Écran de connexion (map Menu, client local uniquement).
+	// Login screen (Menu map, local client only).
 	void ShowLoginMenu();
 	void HideLoginMenu();
 	void ConnectToServer(const FString& Ip, const FString& Pseudo, const FString& Color);
 
-	// Commandes console serveur.
+	// Server console commands.
 	UFUNCTION(Exec)
 	void DebugDamage(int32 Amount);
 
@@ -32,11 +32,11 @@ public:
 
 	void ApplyDamageToAll(int32 Amount);
 
-	// Sauvegarde serveur (un fichier par joueur).
+	// Server-side save (one file per player).
 	void SaveProfileFor(const class ASalamanderPlayerState* PS);
 	void SaveAllProfiles();
 
-	// Mort d'un joueur (PV = 0) : détruit le pawn et respawn au point de départ après 3 s.
+	// Player death (HP = 0): destroys the pawn and respawns at the start point after 3 s.
 	void HandlePlayerDeath(class APawn* Pawn);
 
 private:

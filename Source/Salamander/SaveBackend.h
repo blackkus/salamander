@@ -10,7 +10,7 @@ class USaveBackend : public UInterface
 	GENERATED_BODY()
 };
 
-// Interface de sauvegarde des profils (un fichier par joueur sur le disque du serveur).
+// Save backend interface (one file per player on the server disk).
 class SALAMANDER_API ISaveBackend
 {
 	GENERATED_BODY()
@@ -19,6 +19,6 @@ public:
 	virtual bool LoadProfile(const FString& Key, class UPlayerProfile* OutProfile) = 0;
 	virtual bool SaveProfile(const FString& Key, const class UPlayerProfile* Profile) = 0;
 
-	// Migration d'une sauvegarde d'ancienne version (vide pour l'instant).
+	// Migration of an old-version save (empty for now).
 	virtual void MigrateProfile(class UPlayerProfile* Profile) {}
 };

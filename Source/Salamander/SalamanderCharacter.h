@@ -61,7 +61,7 @@ protected:
 	void StartSprint();
 	void StopSprint();
 
-	// Accroupissement natif du CharacterMovementComponent (bWantsToCrouch, prédictible).
+	// Native crouch of CharacterMovementComponent (bWantsToCrouch, predicted).
 	void StartCrouch();
 	void StopCrouch();
 
@@ -69,6 +69,6 @@ protected:
 	void ServerSetSprinting(bool bSprint);
 
 private:
-	// Test CLI : avance auto (simule la touche W maintenue).
+	// CLI test: auto move (simulates holding W).
 	bool bAutoMove = false;
 };

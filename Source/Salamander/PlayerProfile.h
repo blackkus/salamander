@@ -4,14 +4,14 @@
 #include "GameFramework/SaveGame.h"
 #include "PlayerProfile.generated.h"
 
-// Profil sauvegarde d'un joueur, cote serveur uniquement.
+// Saved player profile, server side only.
 UCLASS()
 class SALAMANDER_API UPlayerProfile : public USaveGame
 {
 	GENERATED_BODY()
 
 public:
-	// Version du format de sauvegarde (migration via ISaveBackend::MigrateProfile).
+	// Save format version (migration via ISaveBackend::MigrateProfile).
 	UPROPERTY()
 	int32 SaveVersion = 1;
 

@@ -11,8 +11,8 @@ class SALAMANDER_API USalamanderMaterialLib : public UBlueprintFunctionLibrary
 
 public:
 #if WITH_EDITOR
-	// Crée un nœud paramètre vectoriel nommé dans un matériau (appelé depuis les scripts Python éditeur,
-	// car ParameterName/DefaultValue ne sont pas exposés en Python en 5.8).
+	// Creates a named vector parameter node in a material (called from editor Python scripts,
+	// because ParameterName/DefaultValue are not exposed to Python in 5.8).
 	UFUNCTION(BlueprintCallable, Category="Salamander|Material")
 	static class UMaterialExpressionVectorParameter* CreateVectorParameterNode(class UMaterial* Material, FName ParamName, FLinearColor DefaultValue);
 #endif

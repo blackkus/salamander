@@ -6,7 +6,7 @@
 class ASalamanderGameMode;
 class SEditableTextBox;
 
-// Ecran de connexion (map Menu) : IP + pseudo + couleur + bouton. 100% Slate, aucun Blueprint.
+// Login screen (Menu map): IP + pseudo + color + button. 100% Slate, no Blueprint.
 class SALAMANDER_API SLoginWidget : public SCompoundWidget
 {
 public:

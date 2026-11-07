@@ -2,7 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "AbilitySystemComponent.h"
 #include "SalamanderPlayerState.generated.h"
+
+class USalamanderAttributeSet;
 
 UCLASS()
 class SALAMANDER_API ASalamanderPlayerState : public APlayerState
@@ -12,22 +15,31 @@ class SALAMANDER_API ASalamanderPlayerState : public APlayerState
 public:
 	ASalamanderPlayerState();
 
-	// Niveau du joueur. Seul le serveur le modifie.
+	// GAS: the ASC lives on the PlayerState (survives death/respawn). Mixed replication.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<USalamanderAttributeSet> AttributeSet;
+
+	UAbilitySystemComponent* GetASC() const { return AbilitySystemComponent; }
+
+	// Player level. Server only.
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Stats")
 	int32 Level;
 
-	// Pseudo choisi a la connexion (option d'URL ?Name=...). Serveur uniquement.
+	// Pseudo chosen at connect (URL option ?Pseudo= / ?Name=...). Server only.
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Identity")
 	FString PlayerName;
 
-	// Couleur choisie a la connexion (option d'URL ?Color=RRGGBB), appliquee au mesh.
+	// Color chosen at connect (?Color=RRGGBB), applied to the mesh.
 	UPROPERTY(ReplicatedUsing=OnRep_Color, BlueprintReadOnly, Category="Identity")
 	FLinearColor ColorRgb;
 
 	UFUNCTION()
 	void OnRep_Color();
 
-	// Cree un MID depuis M_PlayerColor (parametre BodyColor) et l'applique au mesh du pawn.
+	// Creates a MID from M_PlayerColor (BodyColor param) and applies it to the pawn mesh.
 	void ApplyColorToPawn();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

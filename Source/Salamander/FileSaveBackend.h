@@ -5,7 +5,7 @@
 #include "SaveBackend.h"
 #include "FileSaveBackend.generated.h"
 
-// Sauvegarde dans des fichiers USaveGame, un par joueur (slot = cle), sur le disque du serveur.
+// Save into USaveGame files, one per player (slot = key), on the server disk.
 UCLASS()
 class SALAMANDER_API UFileSaveBackend : public UObject, public ISaveBackend
 {

@@ -76,6 +76,6 @@ void USalamanderCharacterMovementComponent::OnClientCorrectionReceived(FNetworkP
 	if (ACharacter* C = Cast<ACharacter>(GetOwner()))
 	{
 		const float ErrCm = FVector::Dist(NewLocation, C->GetActorLocation());
-		UE_LOG(LogTemp, Log, TEXT("[Move] correction serveur err=%.1f cm"), ErrCm);
+		UE_LOG(LogTemp, Log, TEXT("[Move] server correction err=%.1f cm"), ErrCm);
 	}
 }

@@ -18,10 +18,10 @@ bool UFileSaveBackend::LoadProfile(const FString& Key, UPlayerProfile* OutProfil
 
 	if (Loaded->SaveVersion < 1)
 	{
-		MigrateProfile(Loaded); // migration d'ancienne version (vide pour l'instant)
+		MigrateProfile(Loaded); // old-version migration (empty for now)
 	}
 
-	// USaveGame n'est pas copiable par operator= : on copie champ par champ.
+	// USaveGame is not copyable via operator=: copy field by field.
 	OutProfile->SaveVersion = Loaded->SaveVersion;
 	OutProfile->Name = Loaded->Name;
 	OutProfile->ColorRgb = Loaded->ColorRgb;
@@ -35,7 +35,7 @@ bool UFileSaveBackend::SaveProfile(const FString& Key, const UPlayerProfile* Pro
 	{
 		return false;
 	}
-	// La cle est le pseudo : volontairement simple et NON securise.
-	// TODO(identity): remplacer par un identifiant unique de compte avant toute ouverture au public.
+	// The key is the pseudo: deliberately simple and NOT secure.
+	// TODO(identity): replace with a unique account id before any public release.
 	return UGameplayStatics::SaveGameToSlot(const_cast<UPlayerProfile*>(Profile), Key, 0);
 }

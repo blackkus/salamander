@@ -14,12 +14,16 @@
 #include "PlayerProfile.h"
 #include "SalamanderCharacter.h"
 #include "SalamanderPlayerState.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
+#include "GameplayTagContainer.h"
+#include "GE_Damage.h"
+#include "SalamanderAttributeSet.h"
 #include "SaveBackend.h"
-#include "StatsComponent.h"
 #include "TimerManager.h"
 
-// En CLI (-game), le moteur remplace l'option Name par le surnom local ; on lit donc
-// l'option "Pseudo" en priorite (passe par start_client.bat), "Name" en fallback (éditeur).
+// In CLI (-game), the engine overwrites the Name option with the local nickname; so we read
+// the "Pseudo" option first (sent by start_client.bat), "Name" as fallback (editor).
 static FString GetPseudoOption(const FString& Options)
 {
 	if (UGameplayStatics::HasOption(Options, TEXT("Pseudo")))
@@ -34,7 +38,7 @@ ASalamanderGameMode::ASalamanderGameMode()
 	PlayerStateClass = ASalamanderPlayerState::StaticClass();
 	DefaultPawnClass = ASalamanderCharacter::StaticClass();
 
-	// Le PlayerController reste celui du template Third Person (Blueprint non modifie).
+	// The PlayerController stays the template Third Person one (Blueprint untouched).
 	static ConstructorHelpers::FClassFinder<AController> PCBP(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"));
 	if (PCBP.Succeeded())
 	{
@@ -46,21 +50,21 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
 
-	// Backend de sauvegarde : fichiers sur le disque du serveur, un par joueur.
+	// Save backend: files on the server disk, one per player.
 	SaveBackendObj = NewObject<UFileSaveBackend>(this);
 	SaveBackend = Cast<ISaveBackend>(SaveBackendObj.Get());
 
-	// Sauvegarde periodique toutes les 60 s.
+	// Periodic save every 60 s.
 	GetWorldTimerManager().SetTimer(SaveTimerHandle, this, &ASalamanderGameMode::SaveAllProfiles, 60.f, true);
 
-	// Map Menu (client lance sans IP) : pas de pawn, on affiche l'ecran de connexion Slate.
+	// Menu map (client started without IP): no pawn, show the Slate login screen.
 	UE_LOG(LogTemp, Log, TEXT("[GameMode] InitGame MapName=%s NetMode=%d"), *MapName, (int32)GetWorld()->GetNetMode());
 	if (GetWorld()->GetNetMode() != NM_DedicatedServer && MapName.Contains(TEXT("Menu")))
 	{
 		DefaultPawnClass = nullptr;
 		ShowLoginMenu();
 
-		// Test CLI : -ConnectTo=127.0.0.1 -ConnectPseudo=Bob -ConnectColor=FF8800 -> connexion auto sans clic.
+		// CLI test: -ConnectTo=127.0.0.1 -ConnectPseudo=Bob -ConnectColor=FF8800 -> auto-connect without click.
 		FString ConnectIp;
 		if (FParse::Value(FCommandLine::Get(), TEXT("ConnectTo="), ConnectIp) && !ConnectIp.IsEmpty())
 		{
@@ -81,7 +85,7 @@ void ASalamanderGameMode::ShowLoginMenu()
 	LoginWidget = SNew(SLoginWidget);
 	LoginWidget->SetGameMode(this);
 	GEngine->GameViewport->AddViewportWidgetContent(LoginWidget.ToSharedRef(), 100);
-	UE_LOG(LogTemp, Log, TEXT("[GameMode] Menu de connexion affiche"));
+	UE_LOG(LogTemp, Log, TEXT("[GameMode] Login menu shown"));
 }
 
 void ASalamanderGameMode::HideLoginMenu()
@@ -97,11 +101,11 @@ void ASalamanderGameMode::ConnectToServer(const FString& Ip, const FString& Pseu
 {
 	const FString Url = FString::Printf(TEXT("%s?Pseudo=%s?Color=%s"), *Ip, *Pseudo, *Color);
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	UE_LOG(LogTemp, Log, TEXT("[GameMode] Connexion a %s (PC=%d)"), *Url, PC != nullptr);
+	UE_LOG(LogTemp, Log, TEXT("[GameMode] Connecting to %s (PC=%d)"), *Url, PC != nullptr);
 	HideLoginMenu();
 	if (GEngine != nullptr)
 	{
-		// Méthode standard des menus : travel client vers l'URL (IP?options).
+		// Standard menu approach: client travel to the URL (IP?options).
 		GEngine->SetClientTravel(GetWorld(), *Url, TRAVEL_Absolute);
 	}
 }
@@ -111,18 +115,18 @@ void ASalamanderGameMode::PreLogin(const FString& Options, const FString& Addres
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 	if (!ErrorMessage.IsEmpty())
 	{
-		return; // deja refuse par le parent
+		return; // already rejected by the parent
 	}
 
 	const FString Name = GetPseudoOption(Options);
 	if (Name.IsEmpty())
 	{
-		ErrorMessage = TEXT("Pseudo requis : open <ip>?Name=Bob?Color=FF8800");
+		ErrorMessage = TEXT("Pseudo required: open <ip>?Name=Bob?Color=FF8800");
 		return;
 	}
 	if (Name.Len() > 16)
 	{
-		ErrorMessage = TEXT("Pseudo trop long (16 caracteres max)");
+		ErrorMessage = TEXT("Pseudo too long (16 chars max)");
 		return;
 	}
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
@@ -131,7 +135,7 @@ void ASalamanderGameMode::PreLogin(const FString& Options, const FString& Addres
 		{
 			if (PS->PlayerName.Equals(Name, ESearchCase::IgnoreCase))
 			{
-				ErrorMessage = TEXT("Pseudo deja pris");
+				ErrorMessage = TEXT("Pseudo already taken");
 				return;
 			}
 		}
@@ -157,7 +161,7 @@ APlayerController* ASalamanderGameMode::Login(UPlayer* NewPlayer, ENetRole InRem
 			PS->ColorRgb = FLinearColor(FColor::FromHex(ColorHex));
 		}
 
-		// Charge le profil sauvegarde (serveur uniquement) : niveau et couleur sont restaures.
+		// Load the saved profile (server only): level and color are restored.
 		if (SaveBackend != nullptr && !PS->PlayerName.IsEmpty())
 		{
 			UPlayerProfile* Loaded = NewObject<UPlayerProfile>(this);
@@ -165,11 +169,11 @@ APlayerController* ASalamanderGameMode::Login(UPlayer* NewPlayer, ENetRole InRem
 			{
 				PS->Level = Loaded->Level;
 				PS->ColorRgb = Loaded->ColorRgb;
-				UE_LOG(LogTemp, Log, TEXT("[GameMode] Profil charge pour %s: Level=%d"), *PS->PlayerName, PS->Level);
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] Loaded profile for %s: Level=%d"), *PS->PlayerName, PS->Level);
 			}
 		}
 
-		PS->ApplyColorToPawn(); // cote serveur (les clients recoivent via OnRep_Color)
+		PS->ApplyColorToPawn(); // server side (clients get it via OnRep_Color)
 		UE_LOG(LogTemp, Log, TEXT("[GameMode] Login Name=%s Color=%s"), *Name, *ColorHex);
 	}
 	return PC;
@@ -179,21 +183,9 @@ void ASalamanderGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	// Le composant de stats est cree et attache cote serveur uniquement (AddInstanceComponent
-	// pour qu'il soit pris en compte par la replication) ; il est replique vers les clients.
-	if (APawn* Pawn = NewPlayer->GetPawn())
-	{
-		if (Pawn->FindComponentByClass<UStatsComponent>() == nullptr)
-		{
-			UStatsComponent* Stats = NewObject<UStatsComponent>(Pawn, TEXT("StatsComponent"));
-			Pawn->AddInstanceComponent(Stats);
-			Stats->RegisterComponent();
-		}
-	}
-
 	UE_LOG(LogTemp, Log, TEXT("[GameMode] PostLogin %s"), *NewPlayer->GetName());
 
-	// Tests CLI automatises (serveur lance avec -TestAutoDamage=<n> et/ou -TestAutoLevel=<n>).
+	// Automated CLI tests (server started with -TestAutoDamage=<n> and/or -TestAutoLevel=<n>).
 	int32 AutoDamage = 0;
 	if (FParse::Value(FCommandLine::Get(), TEXT("TestAutoDamage="), AutoDamage) && AutoDamage > 0)
 	{
@@ -230,7 +222,7 @@ void ASalamanderGameMode::PostLogin(APlayerController* NewPlayer)
 
 void ASalamanderGameMode::Logout(AController* Exiting)
 {
-	// Sauvegarde a la deconnexion.
+	// Save on disconnect.
 	if (Exiting != nullptr && Exiting->IsPlayerController())
 	{
 		if (const ASalamanderPlayerState* PS = Exiting->GetPlayerState<ASalamanderPlayerState>())
@@ -255,7 +247,7 @@ void ASalamanderGameMode::SaveProfileFor(const ASalamanderPlayerState* PS)
 
 	if (SaveBackend->SaveProfile(PS->PlayerName, Profile))
 	{
-		UE_LOG(LogTemp, Log, TEXT("[GameMode] Profil sauvegarde: %s (Level=%d)"), *PS->PlayerName, PS->Level);
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] Saved profile: %s (Level=%d)"), *PS->PlayerName, PS->Level);
 	}
 }
 
@@ -272,13 +264,30 @@ void ASalamanderGameMode::SaveAllProfiles()
 
 void ASalamanderGameMode::ApplyDamageToAll(int32 Amount)
 {
+	// Damage via GameplayEffect (GE_Damage, SetByCaller Data.Damage), applied on the server only.
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		if (APawn* Pawn = It->Get()->GetPawn())
+		if (ASalamanderPlayerState* PS = (*It)->GetPlayerState<ASalamanderPlayerState>())
 		{
-			if (UStatsComponent* Stats = Pawn->FindComponentByClass<UStatsComponent>())
+			if (UAbilitySystemComponent* ASC = PS->GetASC())
 			{
-				Stats->ApplyDamage(Amount);
+				FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+				// Set the magnitude on the GE default object before making the spec (debug path).
+				if (UGE_Damage* Def = Cast<UGE_Damage>(UGE_Damage::StaticClass()->GetDefaultObject()))
+				{
+					for (FGameplayModifierInfo& Mod : Def->Modifiers)
+					{
+						if (Mod.Attribute == USalamanderAttributeSet::GetHealthAttribute())
+						{
+							Mod.ModifierMagnitude = FScalableFloat(-static_cast<float>(Amount));
+						}
+					}
+				}
+				FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(UGE_Damage::StaticClass(), 1.f, Ctx);
+				if (Spec.IsValid())
+				{
+					ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+				}
 			}
 		}
 	}
@@ -286,13 +295,13 @@ void ASalamanderGameMode::ApplyDamageToAll(int32 Amount)
 
 void ASalamanderGameMode::DebugDamage(int32 Amount)
 {
-	// Execute uniquement sur le serveur (console du serveur dedie).
+	// Server console only (dedicated server console).
 	ApplyDamageToAll(Amount);
 }
 
 void ASalamanderGameMode::DebugSetLevel(const FString& Name, int32 NewLevel)
 {
-	// Execute uniquement sur le serveur (console du serveur dedie).
+	// Server console only (dedicated server console).
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		if (ASalamanderPlayerState* PS = (*It)->GetPlayerState<ASalamanderPlayerState>())
@@ -312,7 +321,7 @@ void ASalamanderGameMode::HandlePlayerDeath(APawn* Pawn)
 	AController* Controller = Pawn != nullptr ? Pawn->GetController() : nullptr;
 	if (ASalamanderPlayerState* PS = Controller != nullptr ? Controller->GetPlayerState<ASalamanderPlayerState>() : nullptr)
 	{
-		UE_LOG(LogTemp, Log, TEXT("[GameMode] Mort de %s (PV=0)"), *PS->PlayerName);
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] %s died (HP=0)"), *PS->PlayerName);
 	}
 
 	if (Controller != nullptr)
@@ -324,11 +333,11 @@ void ASalamanderGameMode::HandlePlayerDeath(APawn* Pawn)
 		{
 			if (AController* C = WeakController.Get())
 			{
-				// Respawn au point de départ ; le nouveau pawn revient avec PV pleins (pas de pénalité).
+				// Respawn at the start point; the new pawn comes back with full HP (no penalty).
 				RestartPlayer(C);
 				if (ASalamanderPlayerState* PS = C->GetPlayerState<ASalamanderPlayerState>())
 				{
-					UE_LOG(LogTemp, Log, TEXT("[GameMode] Respawn de %s au point de depart"), *PS->PlayerName);
+					UE_LOG(LogTemp, Log, TEXT("[GameMode] %s respawned at start point"), *PS->PlayerName);
 				}
 			}
 		}, 3.f, false);
