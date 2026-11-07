@@ -18,6 +18,8 @@
 #include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "GE_Damage.h"
+#include "DA_DeathRules.h"
+#include "GameplayTagContainer.h"
 #include "SalamanderAttributeSet.h"
 #include "SaveBackend.h"
 #include "TimerManager.h"
@@ -53,6 +55,9 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 	// Save backend: files on the server disk, one per player.
 	SaveBackendObj = NewObject<UFileSaveBackend>(this);
 	SaveBackend = Cast<ISaveBackend>(SaveBackendObj.Get());
+
+	// Death rules data asset (PROVISOIRE values).
+	DeathRules = LoadObject<UDA_DeathRules>(nullptr, TEXT("/Game/Data/DA_DeathRules"));
 
 	// Periodic save every 60 s.
 	GetWorldTimerManager().SetTimer(SaveTimerHandle, this, &ASalamanderGameMode::SaveAllProfiles, 60.f, true);
@@ -324,6 +329,16 @@ void ASalamanderGameMode::HandlePlayerDeath(APawn* Pawn)
 		UE_LOG(LogTemp, Log, TEXT("[GameMode] %s died (HP=0)"), *PS->PlayerName);
 	}
 
+	// Mark the player as dead (GameplayTag State.Dead, replicated) -> blocks inputs.
+	if (ASalamanderPlayerState* PS = Controller != nullptr ? Controller->GetPlayerState<ASalamanderPlayerState>() : nullptr)
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetASC())
+		{
+			ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Dead")));
+		}
+	}
+
+	const float Delay = DeathRules != nullptr ? DeathRules->RespawnDelay : 3.f; // PROVISOIRE value inside the DA
 	if (Controller != nullptr)
 	{
 		Controller->UnPossess();
@@ -337,10 +352,14 @@ void ASalamanderGameMode::HandlePlayerDeath(APawn* Pawn)
 				RestartPlayer(C);
 				if (ASalamanderPlayerState* PS = C->GetPlayerState<ASalamanderPlayerState>())
 				{
+					if (UAbilitySystemComponent* ASC = PS->GetASC())
+					{
+						ASC->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Dead")));
+					}
 					UE_LOG(LogTemp, Log, TEXT("[GameMode] %s respawned at start point"), *PS->PlayerName);
 				}
 			}
-		}, 3.f, false);
+		}, Delay, false);
 	}
 
 	if (Pawn != nullptr)

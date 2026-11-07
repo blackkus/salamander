@@ -3,6 +3,7 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Pawn.h"
 #include "Net/UnrealNetwork.h"
+#include "GameplayTagContainer.h"
 #include "SalamanderGameMode.h"
 
 void USalamanderAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -28,6 +29,12 @@ void USalamanderAttributeSet::PostGameplayEffectExecute(const FGameplayEffectMod
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		// Clamp Health into [0, MaxHealth] (server side).
+		Health.SetCurrentValue(FMath::Clamp(Health.GetCurrentValue(), 0.f, MaxHealth.GetCurrentValue()));
+	}
+
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute() && Health.GetCurrentValue() <= 0.f)
 	{
 		// Death: notify the GameMode, server side only.
@@ -35,6 +42,7 @@ void USalamanderAttributeSet::PostGameplayEffectExecute(const FGameplayEffectMod
 		{
 			if (APawn* Pawn = Cast<APawn>(ASC->GetAvatarActor()); Pawn != nullptr && Pawn->HasAuthority())
 			{
+				ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Dead")));
 				if (ASalamanderGameMode* GM = Pawn->GetWorld()->GetAuthGameMode<ASalamanderGameMode>())
 				{
 					GM->HandlePlayerDeath(Pawn);

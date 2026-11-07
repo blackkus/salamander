@@ -12,6 +12,7 @@
 #include "SalamanderPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "GE_InitStats.h"
+#include "GameplayTagContainer.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "TimerManager.h"
@@ -184,6 +185,10 @@ void ASalamanderCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void ASalamanderCharacter::Move(const FInputActionValue& Value)
 {
+	if (IsDead())
+	{
+		return;
+	}
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
@@ -201,6 +206,10 @@ void ASalamanderCharacter::Move(const FInputActionValue& Value)
 
 void ASalamanderCharacter::Look(const FInputActionValue& Value)
 {
+	if (IsDead())
+	{
+		return;
+	}
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
@@ -212,6 +221,10 @@ void ASalamanderCharacter::Look(const FInputActionValue& Value)
 
 void ASalamanderCharacter::StartSprint()
 {
+	if (IsDead())
+	{
+		return;
+	}
 	if (USalamanderCharacterMovementComponent* MoveComp = Cast<USalamanderCharacterMovementComponent>(GetCharacterMovement()))
 	{
 		MoveComp->bSprinting = true;
@@ -224,6 +237,10 @@ void ASalamanderCharacter::StartSprint()
 
 void ASalamanderCharacter::StopSprint()
 {
+	if (IsDead())
+	{
+		return;
+	}
 	if (USalamanderCharacterMovementComponent* MoveComp = Cast<USalamanderCharacterMovementComponent>(GetCharacterMovement()))
 	{
 		MoveComp->bSprinting = false;
@@ -244,11 +261,19 @@ void ASalamanderCharacter::ServerSetSprinting_Implementation(bool bSprint)
 
 void ASalamanderCharacter::StartCrouch()
 {
+	if (IsDead())
+	{
+		return;
+	}
 	Crouch();
 }
 
 void ASalamanderCharacter::StopCrouch()
 {
+	if (IsDead())
+	{
+		return;
+	}
 	UnCrouch();
 }
 
@@ -298,4 +323,23 @@ void ASalamanderCharacter::Tick(float DeltaSeconds)
 	{
 		AddMovementInput(FVector(1.f, 0.f, 0.f), 1.f);
 	}
+	// Log dead/alive transitions (replicated tag) so clients see death and respawn.
+	const bool bDead = IsDead();
+	if (bDead != bWasDead)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[Char] %s dead-tag %s"), *GetName(), bDead ? TEXT("ON") : TEXT("OFF"));
+		bWasDead = bDead;
+	}
+}
+
+bool ASalamanderCharacter::IsDead() const
+{
+	if (const ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
+	{
+		if (const UAbilitySystemComponent* ASC = PS->GetASC())
+		{
+			return ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Dead")));
+		}
+	}
+	return false;
 }

@@ -71,4 +71,9 @@ protected:
 private:
 	// CLI test: auto move (simulates holding W).
 	bool bAutoMove = false;
+	bool bWasDead = false;
+
+public:
+	// True while the State.Dead tag is active (blocks inputs).
+	bool IsDead() const;
 };

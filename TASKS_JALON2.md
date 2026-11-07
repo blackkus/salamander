@@ -30,7 +30,7 @@ Règle : tout ce qui dépend de ces décisions est une **valeur dans un Data Ass
 
 ---
 
-## T7. Installer GAS et migrer les statistiques [AGENT]
+## T7. Installer GAS et migrer les statistiques [AGENT] — FAIT (cc70fb6)
 
 Les statistiques du jalon 1 (`UStatsComponent`) doivent passer dans GAS, sinon il y aura deux systèmes de santé.
 
@@ -39,7 +39,7 @@ Les statistiques du jalon 1 (`UStatsComponent`) doivent passer dans GAS, sinon i
 
 **Test :** à 2 clients, `DebugDamage 30` sur le serveur ramène la santé de 100 à 70, et chaque client voit la valeur (log). Les joueurs se connectent toujours et retrouvent leur sauvegarde.
 
-## T8. Mort et réapparition (provisoire) [AGENT]
+## T8. Mort et réapparition (provisoire) [AGENT] — FAIT (tag State.Dead, DA_DeathRules PROVISOIRE 5s, entrees bloquees)
 
 **Prompt :**
 > Lis AGENTS.md. À 0 PV, le serveur marque le joueur comme mort (GameplayTag), bloque ses entrées, attend un délai puis le réapparaît au point de départ avec la santé pleine. Délai et lieu viennent d'un Data Asset `DA_DeathRules`. Valeurs provisoires : 5 secondes, point de départ du niveau, aucune perte, marquées `PROVISOIRE`. Prévois dans ce Data Asset un champ `RespawnLocationType` (point de départ ou lieu enregistré), sans implémenter le lieu enregistré pour l'instant.

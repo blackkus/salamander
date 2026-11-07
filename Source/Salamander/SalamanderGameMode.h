@@ -47,5 +47,9 @@ private:
 
 	class ISaveBackend* SaveBackend = nullptr;
 
+	// Death rules (PROVISOIRE values inside).
+	UPROPERTY()
+	TObjectPtr<class UDA_DeathRules> DeathRules;
+
 	FTimerHandle SaveTimerHandle;
 };
