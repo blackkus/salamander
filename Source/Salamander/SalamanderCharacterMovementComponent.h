@@ -44,9 +44,5 @@ public:
 	bool bSprinting = false;
 
 	virtual FNetworkPredictionData_Client* GetPredictionData_Client() const override;
-	virtual void ResetPredictionData_Client() override;
 	virtual float GetMaxSpeed() const override;
-
-private:
-	mutable FNetworkPredictionData_Client_Salamander* SalamanderClientPredictionData = nullptr;
 };

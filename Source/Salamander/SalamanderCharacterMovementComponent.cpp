@@ -53,18 +53,12 @@ FSavedMovePtr FNetworkPredictionData_Client_Salamander::AllocateNewMove()
 
 FNetworkPredictionData_Client* USalamanderCharacterMovementComponent::GetPredictionData_Client() const
 {
-	if (SalamanderClientPredictionData == nullptr)
+	if (ClientPredictionData == nullptr)
 	{
-		SalamanderClientPredictionData = new FNetworkPredictionData_Client_Salamander(*this);
+		USalamanderCharacterMovementComponent* MutableThis = const_cast<USalamanderCharacterMovementComponent*>(this);
+		MutableThis->ClientPredictionData = new FNetworkPredictionData_Client_Salamander(*this);
 	}
-	return SalamanderClientPredictionData;
-}
-
-void USalamanderCharacterMovementComponent::ResetPredictionData_Client()
-{
-	delete SalamanderClientPredictionData;
-	SalamanderClientPredictionData = nullptr;
-	Super::ResetPredictionData_Client();
+	return ClientPredictionData;
 }
 
 float USalamanderCharacterMovementComponent::GetMaxSpeed() const

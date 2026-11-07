@@ -25,4 +25,4 @@ set EDITOR_EXE=%UE_DIR%\Engine\Binaries\Win64\UnrealEditor.exe
 set PROJECT=%PROJECT_DIR%\Salamander.uproject
 
 echo Connexion a %SERVER_IP% en tant que %PSEUDO% (couleur %COULEUR%)
-"%EDITOR_EXE%" "%PROJECT%" -game -log "%SERVER_IP%?Name=%PSEUDO%?Color=%COULEUR%"
+"%EDITOR_EXE%" "%PROJECT%" -game -log "%SERVER_IP%?Name=%PSEUDO%?Pseudo=%PSEUDO%?Color=%COULEUR%"
