@@ -43,3 +43,18 @@ Pour le jalon 1, la clé de sauvegarde d'un joueur est son pseudo. C'est volonta
 
 ## Décisions encore ouvertes (ne pas trancher sans demander)
 Pénalités de mort, qui héberge les serveurs en production, PvP, effet exact des scénarios uniques, équilibrage.
+
+## Leçons du jalon 1 (ne pas répéter)
+
+- **Projet C++ ajouté à un projet Blueprint** : il faut `Source/<Projet>.Target.cs` + `Source/<Projet>Editor.Target.cs` (sinon UBT dit « has no code » et crée des Target.cs temporaires qui mènent à un CS0101). Un résidu `Intermediate/Source/*.Build.cs` provoque aussi CS0101 : vider `Intermediate/Source` avant de compiler.
+- **Ne jamais compiler pendant qu'un process Unreal tourne** sur le projet (DLL verrouillé → LNK1104). Tuer les process Unreal avant chaque Build.bat.
+- **API Python UE 5.8** : `EditorAssetLibrary.create_asset` n'existe plus → `AssetToolsHelpers.get_asset_tools().create_asset(nom_simple, package, class, factory)` ; `save_asset` prend un **path string**, pas l'objet ; factory = `unreal.InputAction_Factory` (underscore) ; `InputAction.value_type` est read-only ; `unreal.Keys` n'existe plus et `unreal.Key('X')` ne marche pas → mapper les touches en **C++** (`UInputMappingContext::UnmapKey` puis `MapKey` + `Triggers.Add(NewObject<UInputTriggerPressed>())`, idempotent) ; `LevelEditorSubsystem.new_level/load_level/save_current_level` remplace `EditorLevelLibrary` (déprécié) ; `MaterialExpressionVectorParameter.ParameterName` non exposé en Python → helper C++ (`USalamanderMaterialLib`) ; `connect_material_property(node, '', MP_BASE_COLOR)` prend 3 args.
+- **FParse::Value tronque la valeur au '?'** → passer les options CLI en paramètres séparés (`-ConnectTo=`, `-ConnectPseudo=`, jamais `-ConnectTo=ip?a=b`).
+- **En CLI (-game), le moteur écrase l'option `?Name=`** par le surnom local → lire `?Pseudo=` en priorité, `?Name=` en fallback (éditeur).
+- **Menu client** : `GEngine->SetClientTravel(world, url, TRAVEL_Absolute)` (pas `ClientTravel` sur le PC, qui ne part pas en standalone sans pawn) ; widget Slate via `GEngine->GameViewport->AddViewportWidgetContent(...)`.
+- **Clients en CLI sur la même machine que le serveur** : crash RHI en DX12 → lancer les clients avec `-d3d11` ; `-unattended` contre les boîtes de dialogue bloquantes ; `-ABSLOG=<fichier>` pour des logs séparés par process.
+- **Prédiction custom (FSavedMove)** : renseigner le membre `ClientPredictionData` de la classe mère via `const_cast` dans `GetPredictionData_Client()` — le moteur y accède directement ensuite, sinon crash null côté client.
+- **Composant répliqué créé dynamiquement côté serveur** : utiliser `AddInstanceComponent` (pas seulement `RegisterComponent`), sinon il n'est pas répliqué.
+- **USaveGame** : non copiable par `operator=` → copier champ par champ. `FColor::ToLinearColor()` n'existe plus en 5.8 → `FLinearColor(FColor)`.
+- **La console du serveur (-server -log) n'est PAS pilotable via un pipe stdin** → tests CLI auto via paramètres (`-TestAutoDamage=`, `-TestAutoLevel=`, `-ConnectTo=`, `-TestAutoMove/Sprint/Crouch=`).
+- Toujours lancer les commandlets éditeur Python avec `-unattended -nullrhi -nosound -log`.
