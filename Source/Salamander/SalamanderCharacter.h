@@ -45,6 +45,8 @@ class SALAMANDER_API ASalamanderCharacter : public ACharacter
 public:
 	ASalamanderCharacter(const FObjectInitializer& ObjectInitializer);
 
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -65,4 +67,8 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetSprinting(bool bSprint);
+
+private:
+	// Test CLI : avance auto (simule la touche W maintenue).
+	bool bAutoMove = false;
 };

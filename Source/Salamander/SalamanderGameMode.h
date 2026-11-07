@@ -36,6 +36,9 @@ public:
 	void SaveProfileFor(const class ASalamanderPlayerState* PS);
 	void SaveAllProfiles();
 
+	// Mort d'un joueur (PV = 0) : détruit le pawn et respawn au point de départ après 3 s.
+	void HandlePlayerDeath(class APawn* Pawn);
+
 private:
 	TSharedPtr<class SLoginWidget> LoginWidget;
 

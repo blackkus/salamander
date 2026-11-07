@@ -69,3 +69,13 @@ float USalamanderCharacterMovementComponent::GetMaxSpeed() const
 	}
 	return Super::GetMaxSpeed();
 }
+
+void USalamanderCharacterMovementComponent::OnClientCorrectionReceived(FNetworkPredictionData_Client_Character& ClientData, float TimeStamp, FVector NewLocation, FVector NewVelocity, UPrimitiveComponent* NewBase, FName NewBaseBoneName, bool bHasBase, bool bBaseRelativePosition, uint8 ServerMovementMode, FVector ServerGravityDirection)
+{
+	Super::OnClientCorrectionReceived(ClientData, TimeStamp, NewLocation, NewVelocity, NewBase, NewBaseBoneName, bHasBase, bBaseRelativePosition, ServerMovementMode, ServerGravityDirection);
+	if (ACharacter* C = Cast<ACharacter>(GetOwner()))
+	{
+		const float ErrCm = FVector::Dist(NewLocation, C->GetActorLocation());
+		UE_LOG(LogTemp, Log, TEXT("[Move] correction serveur err=%.1f cm"), ErrCm);
+	}
+}

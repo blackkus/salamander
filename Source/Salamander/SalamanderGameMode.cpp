@@ -306,3 +306,36 @@ void ASalamanderGameMode::DebugSetLevel(const FString& Name, int32 NewLevel)
 		}
 	}
 }
+
+void ASalamanderGameMode::HandlePlayerDeath(APawn* Pawn)
+{
+	AController* Controller = Pawn != nullptr ? Pawn->GetController() : nullptr;
+	if (ASalamanderPlayerState* PS = Controller != nullptr ? Controller->GetPlayerState<ASalamanderPlayerState>() : nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] Mort de %s (PV=0)"), *PS->PlayerName);
+	}
+
+	if (Controller != nullptr)
+	{
+		Controller->UnPossess();
+		TWeakObjectPtr<AController> WeakController = Controller;
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, [this, WeakController]()
+		{
+			if (AController* C = WeakController.Get())
+			{
+				// Respawn au point de départ ; le nouveau pawn revient avec PV pleins (pas de pénalité).
+				RestartPlayer(C);
+				if (ASalamanderPlayerState* PS = C->GetPlayerState<ASalamanderPlayerState>())
+				{
+					UE_LOG(LogTemp, Log, TEXT("[GameMode] Respawn de %s au point de depart"), *PS->PlayerName);
+				}
+			}
+		}, 3.f, false);
+	}
+
+	if (Pawn != nullptr)
+	{
+		Pawn->Destroy();
+	}
+}

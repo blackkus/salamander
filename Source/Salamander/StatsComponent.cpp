@@ -1,6 +1,7 @@
 #include "StatsComponent.h"
 
 #include "Net/UnrealNetwork.h"
+#include "SalamanderGameMode.h"
 
 UStatsComponent::UStatsComponent()
 {
@@ -39,9 +40,20 @@ void UStatsComponent::ApplyDamage(int32 Amount)
 
 	// Sur le serveur, OnRep n'est pas déclenché automatiquement : on l'appelle pour le log.
 	OnRep_Health(OldHealth);
+
+	// Mort : notifie le GameMode (serveur autoritaire) une seule fois.
+	if (Health == 0 && OldHealth > 0)
+	{
+		if (ASalamanderGameMode* GM = GetWorld()->GetAuthGameMode<ASalamanderGameMode>())
+		{
+			GM->HandlePlayerDeath(Cast<APawn>(GetOwner()));
+		}
+	}
 }
 
 void UStatsComponent::OnRep_Health(int32 OldHealth)
 {
 	UE_LOG(LogTemp, Log, TEXT("[Stats] %s Health %d -> %d"), *GetOwner()->GetName(), OldHealth, Health);
 }
+
+// (voir ApplyDamage) — la notification de mort est faite dans ApplyDamage.

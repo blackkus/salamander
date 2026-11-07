@@ -10,6 +10,10 @@
 #include "InputTriggers.h"
 #include "SalamanderCharacterMovementComponent.h"
 #include "SalamanderPlayerState.h"
+#include "StatsComponent.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "TimerManager.h"
 
 ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<USalamanderCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -233,5 +237,48 @@ void ASalamanderCharacter::OnRep_PlayerState()
 	if (const ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
 	{
 		UE_LOG(LogTemp, Log, TEXT("[Char] PlayerState recu: Name=%s Level=%d"), *PS->PlayerName, PS->Level);
+	}
+}
+
+void ASalamanderCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Le composant de stats est attaché côté serveur pour chaque pawn (spawn initial ET respawn).
+	if (HasAuthority() && FindComponentByClass<UStatsComponent>() == nullptr)
+	{
+		UStatsComponent* Stats = NewObject<UStatsComponent>(this, TEXT("StatsComponent"));
+		AddInstanceComponent(Stats);
+		Stats->RegisterComponent();
+	}
+
+	// Tests CLI (client uniquement) : simuler sprint / accroupi automatiquement apres connexion.
+	if (!HasAuthority())
+	{
+		bool bSprint = false, bCrouch = false;
+		FParse::Bool(FCommandLine::Get(), TEXT("TestAutoSprint="), bSprint);
+		FParse::Bool(FCommandLine::Get(), TEXT("TestAutoCrouch="), bCrouch);
+		FParse::Bool(FCommandLine::Get(), TEXT("TestAutoMove="), bAutoMove);
+		if (bSprint)
+		{
+			FTimerHandle H1, H2;
+			GetWorldTimerManager().SetTimer(H1, [this]() { UE_LOG(LogTemp, Log, TEXT("[Char] AUTO SPRINT ON")); StartSprint(); }, 5.f, false);
+			GetWorldTimerManager().SetTimer(H2, [this]() { UE_LOG(LogTemp, Log, TEXT("[Char] AUTO SPRINT OFF")); StopSprint(); }, 10.f, false);
+		}
+		if (bCrouch)
+		{
+			FTimerHandle H1, H2;
+			GetWorldTimerManager().SetTimer(H1, [this]() { UE_LOG(LogTemp, Log, TEXT("[Char] AUTO CROUCH ON")); StartCrouch(); }, 5.f, false);
+			GetWorldTimerManager().SetTimer(H2, [this]() { UE_LOG(LogTemp, Log, TEXT("[Char] AUTO CROUCH OFF")); StopCrouch(); }, 10.f, false);
+		}
+	}
+}
+
+void ASalamanderCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (bAutoMove)
+	{
+		AddMovementInput(FVector(1.f, 0.f, 0.f), 1.f);
 	}
 }
