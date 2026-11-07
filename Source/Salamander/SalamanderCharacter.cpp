@@ -12,6 +12,7 @@
 #include "SalamanderPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "GE_InitStats.h"
+#include "GA_MeleeAttack.h"
 #include "GameplayTagContainer.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -91,6 +92,12 @@ ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectIniti
 	{
 		CrouchAction = CrouchAsset.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> AttackAsset(TEXT("/Game/Input/Actions/IA_Attack"));
+	if (AttackAsset.Succeeded())
+	{
+		AttackAction = AttackAsset.Object;
+	}
 }
 
 void ASalamanderCharacter::PossessedBy(AController* NewController)
@@ -113,6 +120,11 @@ void ASalamanderCharacter::PossessedBy(AController* NewController)
 				{
 					ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 				}
+				// Give the melee attack ability (server; replicated to the client in Mixed mode).
+				ASC->GiveAbility(FGameplayAbilitySpec(UGA_MeleeAttack::StaticClass(), 1, 0, this));
+				TArray<FGameplayAbilitySpecHandle> Handles;
+				ASC->GetAllAbilities(Handles);
+				UE_LOG(LogTemp, Log, TEXT("[GAS] after GiveAbility specs=%d"), Handles.Num());
 			}
 		}
 	}
@@ -140,6 +152,12 @@ void ASalamanderCharacter::PossessedBy(AController* NewController)
 						DefaultMappingContext->UnmapKey(CrouchAction, EKeys::LeftControl);
 						FEnhancedActionKeyMapping& CrouchMapping = DefaultMappingContext->MapKey(CrouchAction, EKeys::LeftControl);
 						CrouchMapping.Triggers.Add(NewObject<UInputTriggerPressed>(DefaultMappingContext));
+					}
+					if (AttackAction)
+					{
+						DefaultMappingContext->UnmapKey(AttackAction, EKeys::LeftMouseButton);
+						FEnhancedActionKeyMapping& AttackMapping = DefaultMappingContext->MapKey(AttackAction, EKeys::LeftMouseButton);
+						AttackMapping.Triggers.Add(NewObject<UInputTriggerPressed>(DefaultMappingContext));
 					}
 				}
 			}
@@ -179,6 +197,10 @@ void ASalamanderCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		{
 			EnhancedInput->BindAction(CrouchAction, ETriggerEvent::Started, this, &ASalamanderCharacter::StartCrouch);
 			EnhancedInput->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ASalamanderCharacter::StopCrouch);
+		}
+		if (AttackAction)
+		{
+			EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &ASalamanderCharacter::TryMeleeAttack);
 		}
 	}
 }
@@ -301,6 +323,13 @@ void ASalamanderCharacter::BeginPlay()
 		FParse::Bool(FCommandLine::Get(), TEXT("TestAutoSprint="), bSprint);
 		FParse::Bool(FCommandLine::Get(), TEXT("TestAutoCrouch="), bCrouch);
 		FParse::Bool(FCommandLine::Get(), TEXT("TestAutoMove="), bAutoMove);
+		bool bAutoAttack = false;
+		FParse::Bool(FCommandLine::Get(), TEXT("TestAutoAttack="), bAutoAttack);
+		if (bAutoAttack)
+		{
+			FTimerHandle H;
+			GetWorldTimerManager().SetTimer(H, [this]() { TryMeleeAttack(); }, 0.7f, true);
+		}
 		if (bSprint)
 		{
 			FTimerHandle H1, H2;
@@ -342,4 +371,23 @@ bool ASalamanderCharacter::IsDead() const
 		}
 	}
 	return false;
+}
+
+
+void ASalamanderCharacter::TryMeleeAttack()
+{
+	if (IsDead())
+	{
+		return;
+	}
+	if (ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetASC())
+		{
+			TArray<FGameplayAbilitySpecHandle> Handles;
+			ASC->GetAllAbilities(Handles);
+			UE_LOG(LogTemp, Log, TEXT("[GAS] TryMeleeAttack specs=%d"), Handles.Num());
+			ASC->TryActivateAbilityByClass(UGA_MeleeAttack::StaticClass(), true);
+		}
+	}
 }

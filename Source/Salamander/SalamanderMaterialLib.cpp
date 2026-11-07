@@ -46,3 +46,31 @@ UDA_DeathRules* USalamanderMaterialLib::EnsureDeathRulesAsset()
 	return DA;
 }
 #endif
+
+#if WITH_EDITOR
+template <typename T>
+static T* EnsureDataAsset(const TCHAR* Path, const TCHAR* Name)
+{
+	T* Asset = LoadObject<T>(nullptr, Path);
+	if (Asset != nullptr)
+	{
+		return Asset;
+	}
+	UPackage* Pkg = CreatePackage(TEXT("/Game/Data"));
+	Asset = NewObject<T>(Pkg, T::StaticClass(), Name, RF_Public | RF_Standalone);
+	Asset->MarkPackageDirty();
+	const FString FilePath = FPackageName::LongPackageNameToFilename(Path, FPackageName::GetAssetPackageExtension());
+	UPackage::Save(Pkg, Asset, *FilePath, FSavePackageArgs());
+	return Asset;
+}
+
+UDA_MeleeAttackStats* USalamanderMaterialLib::EnsureMeleeStatsAsset()
+{
+	return EnsureDataAsset<UDA_MeleeAttackStats>(TEXT("/Game/Data/DA_MeleeAttackStats"), TEXT("DA_MeleeAttackStats"));
+}
+
+UDA_EnemyStats* USalamanderMaterialLib::EnsureEnemyStatsAsset()
+{
+	return EnsureDataAsset<UDA_EnemyStats>(TEXT("/Game/Data/DA_EnemyStats"), TEXT("DA_EnemyStats"));
+}
+#endif

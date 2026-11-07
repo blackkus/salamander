@@ -42,6 +42,9 @@ class SALAMANDER_API ASalamanderCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input", meta=(AllowPrivateAccess="true"))
 	UInputAction* CrouchAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input", meta=(AllowPrivateAccess="true"))
+	UInputAction* AttackAction;
+
 public:
 	ASalamanderCharacter(const FObjectInitializer& ObjectInitializer);
 
@@ -76,4 +79,11 @@ private:
 public:
 	// True while the State.Dead tag is active (blocks inputs).
 	bool IsDead() const;
+
+	// Melee combo state (server authoritative, used by GA_MeleeAttack).
+	int32 MeleeComboIndex = 0;
+	float LastMeleeTime = 0.f;
+
+	// Activates the melee attack ability (tag Ability.MeleeAttack).
+	void TryMeleeAttack();
 };

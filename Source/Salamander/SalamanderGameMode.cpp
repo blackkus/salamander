@@ -4,6 +4,8 @@
 #include "Engine/EngineTypes.h"
 #include "Engine/GameViewportClient.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerStart.h"
+#include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "SLoginWidget.h"
 #include "Kismet/GameplayStatics.h"
@@ -19,6 +21,8 @@
 #include "GameplayTagContainer.h"
 #include "GE_Damage.h"
 #include "DA_DeathRules.h"
+#include "EnemyCharacter.h"
+#include "SalamanderCharacter.h"
 #include "GameplayTagContainer.h"
 #include "SalamanderAttributeSet.h"
 #include "SaveBackend.h"
@@ -58,6 +62,25 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 
 	// Death rules data asset (PROVISOIRE values).
 	DeathRules = LoadObject<UDA_DeathRules>(nullptr, TEXT("/Game/Data/DA_DeathRules"));
+
+	// Spawn simple enemies (server only). Count via -EnemyCount=<n> (default 2).
+	if (GetWorld()->GetNetMode() != NM_Client)
+	{
+		int32 EnemyCount = 2;
+		FParse::Value(FCommandLine::Get(), TEXT("EnemyCount="), EnemyCount);
+		FVector BaseLoc = FVector::ZeroVector;
+		for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+		{
+			BaseLoc = It->GetActorLocation();
+			break;
+		}
+		for (int32 i = 0; i < EnemyCount; i++)
+		{
+			const FVector Loc = BaseLoc + FVector(250.f * (i + 1), 250.f * i, 0.f);
+			GetWorld()->SpawnActor<AEnemyCharacter>(AEnemyCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
+		}
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d enemies"), EnemyCount);
+	}
 
 	// Periodic save every 60 s.
 	GetWorldTimerManager().SetTimer(SaveTimerHandle, this, &ASalamanderGameMode::SaveAllProfiles, 60.f, true);
@@ -197,6 +220,25 @@ void ASalamanderGameMode::PostLogin(APlayerController* NewPlayer)
 		const int32 Amount = AutoDamage;
 		FTimerHandle Handle;
 		GetWorldTimerManager().SetTimer(Handle, [this, Amount]() { ApplyDamageToAll(Amount); }, 10.f, false);
+	}
+
+	// CLI test: server-side melee swings (-TestAutoMelee=1) to validate the ability on the server.
+	bool bAutoMelee = false;
+	if (FParse::Bool(FCommandLine::Get(), TEXT("TestAutoMelee="), bAutoMelee) && bAutoMelee)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] TestAutoMelee armed pawn=%d"), NewPlayer->GetPawn() != nullptr ? 1 : 0);
+		FTimerHandle MHandle;
+		GetWorldTimerManager().SetTimer(MHandle, [this, NewPlayer]()
+		{
+			if (ASalamanderCharacter* Char = Cast<ASalamanderCharacter>(NewPlayer->GetPawn()))
+			{
+				Char->TryMeleeAttack();
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] TestAutoMelee: pawn cast failed"));
+			}
+		}, 3.f, false);
 	}
 
 	int32 AutoLevel = 0;

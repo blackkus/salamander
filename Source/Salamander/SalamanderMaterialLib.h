@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "DA_DeathRules.h"
+#include "DA_MeleeAttackStats.h"
+#include "DA_EnemyStats.h"
 #include "SalamanderMaterialLib.generated.h"
 
 UCLASS()
@@ -20,5 +22,13 @@ public:
 	// Creates /Game/Data/DA_DeathRules if missing (PROVISOIRE RespawnDelay=5s).
 	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
 	static UDA_DeathRules* EnsureDeathRulesAsset();
+
+	// Creates /Game/Data/DA_MeleeAttackStats if missing (PROVISOIRE values).
+	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
+	static UDA_MeleeAttackStats* EnsureMeleeStatsAsset();
+
+	// Creates /Game/Data/DA_EnemyStats if missing (PROVISOIRE values).
+	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
+	static UDA_EnemyStats* EnsureEnemyStatsAsset();
 #endif
 };

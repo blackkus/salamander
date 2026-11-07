@@ -12,4 +12,7 @@ class SALAMANDER_API UGE_Damage : public UGameplayEffect
 
 public:
 	UGE_Damage();
+
+	// Applies this damage GE to the target ASC (server side). Amount > 0 = damage.
+	static void ApplyTo(class UAbilitySystemComponent* TargetASC, float Amount);
 };
