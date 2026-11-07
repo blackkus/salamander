@@ -41,20 +41,12 @@ Reste à valider **[TOI]** (éditeur, à la main) :
 
 ---
 
-## Jalon 2 : un combat qui a du sens (en cours)
+## Jalon 2 : un combat qui a du sens — voir TASKS_JALON2.md (plan detaille, GAS)
 
-Si le combat n'est pas plaisant, le reste ne sauvera pas le jeu. Ordre :\n
-1. **Mort et réapparition** — FAIT (`13ac3f0`) : à 0 PV, mort côté serveur, respawn au point de départ
-   après 3 s, PV pleins, pas de pénalité (décision en attendant : pénalités de mort = décision ouverte).
-2. **Ennemi simple** [AGENT] : se déplace, poursuit le joueur, attaque avec **annonce visuelle avant de frapper**
-   (ex: flash/pose telegraphiée), dégâts calculés côté serveur. Test CLI : spawn auto de l'ennemi, poursuite,
-   attaque annoncée puis dégâts sur le joueur (logs).
-3. **Attaque à l'épée du joueur** [AGENT] : enchaînement de coups (combo), détection des touches **serveur**,
-   dégâts **serveur**. Test CLI : `-TestAutoAttack=1` simule les coups ; l'ennemi perd des PV (logs 2 clients).
-4. **Boss** [AGENT] : 2-3 attaques lisibles (telegraphs), barre de vie, récompense enregistrée dans la sauvegarde
-   du joueur (champ `BossesVaincus` dans `UPlayerProfile` par ex.). Test : tuer le boss → sauvegarde → reconnexion → récompense retrouvée.
-5. **Test en famille** [TOI] : vrai essai avec les enfants, noter ce qui est frustrant ou flou → itérer.
+Ordre : T7 migrer les stats vers GAS (AttributeSet Health/MaxHealth, ASC sur PlayerState, DebugDamage via GameplayEffect)
+-> T8 mort/reapparition via GameplayTag + DA_DeathRules (PROVISOIRE) -> T9 attaque epee 3 coups (GA_MeleeAttack,
+traces serveur, DA_MeleeAttackStats) -> T10 ennemi simple (machine a etats C++, attaque annoncee) -> T11 boss +
+recompense sauvegardee (migration SaveVersion) -> T12 test en famille.
 
-Règles qui tiennent pour tout le jalon 2 (AGENTS.md) : serveur autoritaire (dégâts/hit detection/PV côté serveur),
-RPC `Server_...` pour les intentions, contenu en données (Data Tables/Data Assets), pas de Blueprint modifié,
-un fichier par classe, compile après chaque étape, un commit par étape.
+Note : une mort/reapparition simple (sans GAS) a deja ete faite (commit 13ac3f0) ; elle sera remplacee par T8.
+Regles GAS dans AGENTS.md (section "Regles GAS (jalon 2)").

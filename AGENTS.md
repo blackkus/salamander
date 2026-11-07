@@ -58,3 +58,14 @@ Pénalités de mort, qui héberge les serveurs en production, PvP, effet exact d
 - **USaveGame** : non copiable par `operator=` → copier champ par champ. `FColor::ToLinearColor()` n'existe plus en 5.8 → `FLinearColor(FColor)`.
 - **La console du serveur (-server -log) n'est PAS pilotable via un pipe stdin** → tests CLI auto via paramètres (`-TestAutoDamage=`, `-TestAutoLevel=`, `-ConnectTo=`, `-TestAutoMove/Sprint/Crouch=`).
 - Toujours lancer les commandlets éditeur Python avec `-unattended -nullrhi -nosound -log`.
+
+## Règles GAS (jalon 2)
+- L'AbilitySystemComponent des joueurs est sur le PlayerState (il survit à la mort et à la réapparition). Pour les ennemis et boss, il est sur le personnage.
+- Mode de réplication : Mixed pour les joueurs, Minimal pour les ennemis (à vérifier dans la documentation).
+- Les attributs sont dans un AttributeSet (Health, MaxHealth). Il n'y a pas de mana.
+- Toute modification de santé passe par un GameplayEffect appliqué sur le serveur. Jamais d'écriture directe.
+- Les compétences sont écrites en C++ (classes dérivées de UGameplayAbility), pas en Blueprint.
+- Les GameplayTags sont déclarés en C++ ou dans le fichier de configuration texte (DefaultGameplayTags.ini).
+- La détection des touches se fait sur le serveur, par traces de collision pendant une fenêtre de temps définie dans la compétence. Elle ne dépend pas d'une animation (les animations ne sont pas encore choisies).
+- Les ennemis sont pilotés par du code C++ (machine à états simple), pas par des Behavior Trees (binaires).
+- Valeurs de mort et d'équilibrage : dans un Data Asset, jamais en dur. Marque PROVISOIRE ce qui n'est pas décidé.

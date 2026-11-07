@@ -15,6 +15,8 @@ public class Salamander : ModuleRules
 			"EnhancedInput",
 			"NetCore",
 			"GameplayTasks",
+			"GameplayAbilities",
+			"GameplayTags",
 			"UMG",
 			"Slate",
 			"SlateCore"
