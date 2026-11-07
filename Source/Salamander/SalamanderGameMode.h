@@ -18,6 +18,11 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 
+	// Écran de connexion (map Menu, client local uniquement).
+	void ShowLoginMenu();
+	void HideLoginMenu();
+	void ConnectToServer(const FString& Ip, const FString& Pseudo, const FString& Color);
+
 	// Commandes console serveur.
 	UFUNCTION(Exec)
 	void DebugDamage(int32 Amount);
@@ -32,6 +37,8 @@ public:
 	void SaveAllProfiles();
 
 private:
+	TSharedPtr<class SLoginWidget> LoginWidget;
+
 	UPROPERTY()
 	TObjectPtr<UObject> SaveBackendObj;
 

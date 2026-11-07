@@ -1,7 +1,11 @@
 #include "SalamanderGameMode.h"
 
+#include "Engine/Engine.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/GameViewportClient.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "SLoginWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/Color.h"
 #include "Misc/CommandLine.h"
@@ -48,6 +52,58 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 
 	// Sauvegarde periodique toutes les 60 s.
 	GetWorldTimerManager().SetTimer(SaveTimerHandle, this, &ASalamanderGameMode::SaveAllProfiles, 60.f, true);
+
+	// Map Menu (client lance sans IP) : pas de pawn, on affiche l'ecran de connexion Slate.
+	UE_LOG(LogTemp, Log, TEXT("[GameMode] InitGame MapName=%s NetMode=%d"), *MapName, (int32)GetWorld()->GetNetMode());
+	if (GetWorld()->GetNetMode() != NM_DedicatedServer && MapName.Contains(TEXT("Menu")))
+	{
+		DefaultPawnClass = nullptr;
+		ShowLoginMenu();
+
+		// Test CLI : -ConnectTo=127.0.0.1 -ConnectPseudo=Bob -ConnectColor=FF8800 -> connexion auto sans clic.
+		FString ConnectIp;
+		if (FParse::Value(FCommandLine::Get(), TEXT("ConnectTo="), ConnectIp) && !ConnectIp.IsEmpty())
+		{
+			FString ConnectPseudo, ConnectColor;
+			FParse::Value(FCommandLine::Get(), TEXT("ConnectPseudo="), ConnectPseudo);
+			FParse::Value(FCommandLine::Get(), TEXT("ConnectColor="), ConnectColor);
+			ConnectToServer(ConnectIp, ConnectPseudo, ConnectColor);
+		}
+	}
+}
+
+void ASalamanderGameMode::ShowLoginMenu()
+{
+	if (GEngine == nullptr || GEngine->GameViewport == nullptr || LoginWidget.IsValid())
+	{
+		return;
+	}
+	LoginWidget = SNew(SLoginWidget);
+	LoginWidget->SetGameMode(this);
+	GEngine->GameViewport->AddViewportWidgetContent(LoginWidget.ToSharedRef(), 100);
+	UE_LOG(LogTemp, Log, TEXT("[GameMode] Menu de connexion affiche"));
+}
+
+void ASalamanderGameMode::HideLoginMenu()
+{
+	if (GEngine != nullptr && GEngine->GameViewport != nullptr && LoginWidget.IsValid())
+	{
+		GEngine->GameViewport->RemoveViewportWidgetContent(LoginWidget.ToSharedRef());
+		LoginWidget.Reset();
+	}
+}
+
+void ASalamanderGameMode::ConnectToServer(const FString& Ip, const FString& Pseudo, const FString& Color)
+{
+	const FString Url = FString::Printf(TEXT("%s?Pseudo=%s?Color=%s"), *Ip, *Pseudo, *Color);
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	UE_LOG(LogTemp, Log, TEXT("[GameMode] Connexion a %s (PC=%d)"), *Url, PC != nullptr);
+	HideLoginMenu();
+	if (GEngine != nullptr)
+	{
+		// Méthode standard des menus : travel client vers l'URL (IP?options).
+		GEngine->SetClientTravel(GetWorld(), *Url, TRAVEL_Absolute);
+	}
 }
 
 void ASalamanderGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
