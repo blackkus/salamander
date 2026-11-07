@@ -4,7 +4,7 @@
 > Sinon, donne-lui ce fichier à lire au début de chaque session.
 
 ## Projet
-- Nom de code : `Salamender` (module C++ du même nom).
+- Nom de code : `Salamander` (module C++ du même nom).
 - Moteur : Unreal Engine 5.8.4, C++. Windows.
 - Action-RPG en ligne, coopératif, serveur dédié autoritaire, 10 joueurs maximum par instance au départ.
 - Développeur : une seule personne, expérimentée (C#, Java). Le C++ Unreal est récent pour lui : explique brièvement tes choix.
@@ -34,7 +34,7 @@ Gravité sphérique, terrain modifiable, PvP, armes, combat, quêtes, plusieurs 
 ## Compiler
 Commande à adapter aux chemins de la machine (à remplir une fois) :
 ```
-"<CheminUE>\Engine\Build\BatchFiles\Build.bat" <NomProjet>Editor Win64 Development -Project="<CheminProjet>\<NomProjet>.uproject" -WaitMutex
+"C:\Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" SalamanderEditor Win64 Development -Project="C:\Users\Blackkus\Documents\Unreal Projects\Salamander\Salamander.uproject" -WaitMutex
 ```
 Une tâche est terminée quand : le projet compile sans erreur ni avertissement nouveau, et le test décrit dans la tâche est réalisable.
 
