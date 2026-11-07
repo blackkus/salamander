@@ -12,18 +12,30 @@ class SALAMANDER_API ASalamanderGameMode : public AGameModeBase
 public:
 	ASalamanderGameMode();
 
-	// Refuse la connexion si le pseudo (option ?Name=) est vide, > 16 caracteres ou deja pris.
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
-
-	// Lit ?Name= et ?Color= de l'URL de connexion et les stocke dans le PlayerState (serveur).
 	virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
-
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 
-	// Commande console serveur : applique des dégâts à tous les joueurs connectés.
+	// Commandes console serveur.
 	UFUNCTION(Exec)
 	void DebugDamage(int32 Amount);
 
-	// Applique des dégâts à tous les pawns (serveur uniquement).
+	UFUNCTION(Exec)
+	void DebugSetLevel(const FString& Name, int32 NewLevel);
+
 	void ApplyDamageToAll(int32 Amount);
+
+	// Sauvegarde serveur (un fichier par joueur).
+	void SaveProfileFor(const class ASalamanderPlayerState* PS);
+	void SaveAllProfiles();
+
+private:
+	UPROPERTY()
+	TObjectPtr<UObject> SaveBackendObj;
+
+	class ISaveBackend* SaveBackend = nullptr;
+
+	FTimerHandle SaveTimerHandle;
 };

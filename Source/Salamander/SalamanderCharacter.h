@@ -46,6 +46,7 @@ public:
 	ASalamanderCharacter(const FObjectInitializer& ObjectInitializer);
 
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

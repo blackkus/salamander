@@ -6,8 +6,11 @@
 #include "Math/Color.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "FileSaveBackend.h"
+#include "PlayerProfile.h"
 #include "SalamanderCharacter.h"
 #include "SalamanderPlayerState.h"
+#include "SaveBackend.h"
 #include "StatsComponent.h"
 #include "TimerManager.h"
 
@@ -33,6 +36,18 @@ ASalamanderGameMode::ASalamanderGameMode()
 	{
 		PlayerControllerClass = PCBP.Class;
 	}
+}
+
+void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+
+	// Backend de sauvegarde : fichiers sur le disque du serveur, un par joueur.
+	SaveBackendObj = NewObject<UFileSaveBackend>(this);
+	SaveBackend = Cast<ISaveBackend>(SaveBackendObj.Get());
+
+	// Sauvegarde periodique toutes les 60 s.
+	GetWorldTimerManager().SetTimer(SaveTimerHandle, this, &ASalamanderGameMode::SaveAllProfiles, 60.f, true);
 }
 
 void ASalamanderGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
@@ -85,6 +100,19 @@ APlayerController* ASalamanderGameMode::Login(UPlayer* NewPlayer, ENetRole InRem
 		{
 			PS->ColorRgb = FLinearColor(FColor::FromHex(ColorHex));
 		}
+
+		// Charge le profil sauvegarde (serveur uniquement) : niveau et couleur sont restaures.
+		if (SaveBackend != nullptr && !PS->PlayerName.IsEmpty())
+		{
+			UPlayerProfile* Loaded = NewObject<UPlayerProfile>(this);
+			if (SaveBackend->LoadProfile(PS->PlayerName, Loaded))
+			{
+				PS->Level = Loaded->Level;
+				PS->ColorRgb = Loaded->ColorRgb;
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] Profil charge pour %s: Level=%d"), *PS->PlayerName, PS->Level);
+			}
+		}
+
 		PS->ApplyColorToPawn(); // cote serveur (les clients recoivent via OnRep_Color)
 		UE_LOG(LogTemp, Log, TEXT("[GameMode] Login Name=%s Color=%s"), *Name, *ColorHex);
 	}
@@ -109,17 +137,80 @@ void ASalamanderGameMode::PostLogin(APlayerController* NewPlayer)
 
 	UE_LOG(LogTemp, Log, TEXT("[GameMode] PostLogin %s"), *NewPlayer->GetName());
 
-	// Test CLI automatise : si le serveur est lance avec -TestAutoDamage=<n>,
-	// applique <n> degats a tous les joueurs 10 s apres chaque connexion.
+	// Tests CLI automatises (serveur lance avec -TestAutoDamage=<n> et/ou -TestAutoLevel=<n>).
 	int32 AutoDamage = 0;
 	if (FParse::Value(FCommandLine::Get(), TEXT("TestAutoDamage="), AutoDamage) && AutoDamage > 0)
 	{
 		const int32 Amount = AutoDamage;
 		FTimerHandle Handle;
-		GetWorldTimerManager().SetTimer(Handle, [this, Amount]()
+		GetWorldTimerManager().SetTimer(Handle, [this, Amount]() { ApplyDamageToAll(Amount); }, 10.f, false);
+	}
+
+	int32 AutoLevel = 0;
+	if (FParse::Value(FCommandLine::Get(), TEXT("TestAutoLevel="), AutoLevel) && AutoLevel > 0)
+	{
+		if (ASalamanderPlayerState* PS = NewPlayer->GetPlayerState<ASalamanderPlayerState>())
 		{
-			ApplyDamageToAll(Amount);
-		}, 10.f, false);
+			const int32 Level = AutoLevel;
+			const FString Name = PS->PlayerName;
+			FTimerHandle Handle;
+			GetWorldTimerManager().SetTimer(Handle, [this, Name, Level]()
+			{
+				for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+				{
+					if (ASalamanderPlayerState* Other = (*It)->GetPlayerState<ASalamanderPlayerState>())
+					{
+						if (Other->PlayerName == Name)
+						{
+							Other->Level = Level;
+							SaveProfileFor(Other);
+						}
+					}
+				}
+			}, 10.f, false);
+		}
+	}
+}
+
+void ASalamanderGameMode::Logout(AController* Exiting)
+{
+	// Sauvegarde a la deconnexion.
+	if (Exiting != nullptr && Exiting->IsPlayerController())
+	{
+		if (const ASalamanderPlayerState* PS = Exiting->GetPlayerState<ASalamanderPlayerState>())
+		{
+			SaveProfileFor(PS);
+		}
+	}
+	Super::Logout(Exiting);
+}
+
+void ASalamanderGameMode::SaveProfileFor(const ASalamanderPlayerState* PS)
+{
+	if (SaveBackend == nullptr || PS == nullptr || PS->PlayerName.IsEmpty())
+	{
+		return;
+	}
+
+	UPlayerProfile* Profile = NewObject<UPlayerProfile>(this);
+	Profile->Name = PS->PlayerName;
+	Profile->ColorRgb = PS->ColorRgb;
+	Profile->Level = PS->Level;
+
+	if (SaveBackend->SaveProfile(PS->PlayerName, Profile))
+	{
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] Profil sauvegarde: %s (Level=%d)"), *PS->PlayerName, PS->Level);
+	}
+}
+
+void ASalamanderGameMode::SaveAllProfiles()
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (const ASalamanderPlayerState* PS = (*It)->GetPlayerState<ASalamanderPlayerState>())
+		{
+			SaveProfileFor(PS);
+		}
 	}
 }
 
@@ -141,4 +232,21 @@ void ASalamanderGameMode::DebugDamage(int32 Amount)
 {
 	// Execute uniquement sur le serveur (console du serveur dedie).
 	ApplyDamageToAll(Amount);
+}
+
+void ASalamanderGameMode::DebugSetLevel(const FString& Name, int32 NewLevel)
+{
+	// Execute uniquement sur le serveur (console du serveur dedie).
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (ASalamanderPlayerState* PS = (*It)->GetPlayerState<ASalamanderPlayerState>())
+		{
+			if (PS->PlayerName.Equals(Name, ESearchCase::IgnoreCase))
+			{
+				PS->Level = NewLevel;
+				SaveProfileFor(PS);
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] DebugSetLevel %s -> %d"), *Name, NewLevel);
+			}
+		}
+	}
 }

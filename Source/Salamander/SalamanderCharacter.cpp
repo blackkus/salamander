@@ -9,6 +9,7 @@
 #include "InputMappingContext.h"
 #include "InputTriggers.h"
 #include "SalamanderCharacterMovementComponent.h"
+#include "SalamanderPlayerState.h"
 
 ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<USalamanderCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -224,4 +225,13 @@ void ASalamanderCharacter::StartCrouch()
 void ASalamanderCharacter::StopCrouch()
 {
 	UnCrouch();
+}
+
+void ASalamanderCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (const ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
+	{
+		UE_LOG(LogTemp, Log, TEXT("[Char] PlayerState recu: Name=%s Level=%d"), *PS->PlayerName, PS->Level);
+	}
 }
