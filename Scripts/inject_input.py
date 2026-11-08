@@ -8,6 +8,7 @@ user32 = ctypes.windll.user32
 VK_LSHIFT = 0xA0
 VK_LCONTROL = 0xA2
 VK_LMB = 0x01
+VK_ESCAPE = 0x1B
 KEYEVENTF_KEYUP = 0x0002
 MOUSEEVENTF_MOVE = 0x0001
 
@@ -58,6 +59,15 @@ hwnd = wins[0][0]
 user32.SetForegroundWindow(hwnd)
 time.sleep(0.5)
 
+# Escape: pause menu toggle
+send_key(VK_ESCAPE, True)
+time.sleep(0.3)
+send_key(VK_ESCAPE, False)
+time.sleep(1.0)
+send_key(VK_ESCAPE, True)
+time.sleep(0.3)
+send_key(VK_ESCAPE, False)
+time.sleep(0.5)
 # sprint: hold LSHIFT 1.2s
 send_key(VK_LSHIFT, True)
 time.sleep(1.2)

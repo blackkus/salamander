@@ -38,7 +38,7 @@ class SALAMANDER_API USalamanderCharacterMovementComponent : public UCharacterMo
 public:
 	// Max speed while sprinting (base walk/run = MaxWalkSpeed, unchanged).
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sprint")
-	float SprintMaxWalkSpeed = 1000.f;
+	float SprintMaxWalkSpeed = 6000.f; // PLACEHOLDER, very visible for tests
 
 	// Predicted: packed into FSavedMove_Salamander and replayed on client and server.
 	bool bSprinting = false;

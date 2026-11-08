@@ -20,7 +20,11 @@ public:
 
 	// Login screen (Menu map, local client only).
 	void ShowLoginMenu();
+	void ShowCrosshair();
+	void HideCrosshair();
 	void HideLoginMenu();
+
+	TSharedPtr<SWidget> CrosshairWidget;
 	void ConnectToServer(const FString& Ip, const FString& Nick, const FString& Color);
 
 	// Spawns enemies + boss on random navigable points (called 3 s after InitGame, server only).

@@ -10,6 +10,7 @@
 #include "InputTriggers.h"
 #include "SalamanderCharacterMovementComponent.h"
 #include "SalamanderPlayerState.h"
+#include "SalamanderGameMode.h"
 #include "AbilitySystemComponent.h"
 #include "GE_InitStats.h"
 #include "GA_MeleeAttack.h"
@@ -19,7 +20,12 @@
 #include "TimerManager.h"
 #include "GameFramework/PlayerController.h"
 #include "Components/WidgetComponent.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
 #include "NameTagWidget.h"
+#include "SPauseMenu.h"
 #include "SalamanderInputLib.h"
 #include "SalamanderAttributeSet.h"
 
@@ -168,10 +174,14 @@ void ASalamanderCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 					USalamanderInputLib::ApplyAllBindings();
 					UE_LOG(LogTemp, Log, TEXT("[Char] input contexts added: default=%d mouse=%d"), DefaultMappingContext != nullptr ? 1 : 0, MouseLookContext != nullptr ? 1 : 0);
 
-					// Capture the mouse and hide the cursor so mouse-look deltas reach the game.
+					// Capture the mouse permanently and hide the cursor so mouse-look deltas reach the game.
 					PC->bShowMouseCursor = false;
 					FInputModeGameOnly InputMode;
 					PC->SetInputMode(InputMode);
+					if (GEngine != nullptr && GEngine->GameViewport != nullptr)
+					{
+						GEngine->GameViewport->SetMouseCaptureMode(EMouseCaptureMode::CapturePermanently);
+					}
 				}
 			}
 		}
@@ -337,6 +347,31 @@ void ASalamanderCharacter::BeginPlay()
 	// Overhead name tag + health bar (created on every client).
 	NameTagComponent = UNameTagWidget::CreateNameTagComponent(this);
 
+	// Crosshair on the game map (local client only; the OS cursor is hidden in GameOnly mode).
+	// Done here directly: GameMode is server-only, GetAuthGameMode is null on clients.
+	if (IsLocallyControlled() && GEngine != nullptr && GEngine->GameViewport != nullptr && !CrosshairWidget.IsValid())
+	{
+		static FSlateFontInfo CrossFont = []()
+		{
+			FSlateFontInfo F;
+			F.Size = 28;
+			return F;
+		}();
+		CrosshairWidget = SNew(SBox)
+			.HAlign(HAlign_Center)
+			.VAlign(VAlign_Center)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(TEXT("+")))
+				.Font(CrossFont)
+				.ColorAndOpacity(FLinearColor(1.f, 1.f, 1.f, 0.9f))
+				.ShadowOffset(FVector2D(1.f, 1.f))
+				.ShadowColorAndOpacity(FLinearColor::Black)
+			];
+		GEngine->GameViewport->AddViewportWidgetContent(CrosshairWidget.ToSharedRef(), 50);
+		UE_LOG(LogTemp, Log, TEXT("[Char] crosshair shown"));
+	}
+
 	// CLI tests (client only): auto play sprint / crouch after connecting.
 	if (!HasAuthority())
 	{
@@ -384,10 +419,41 @@ void ASalamanderCharacter::Tick(float DeltaSeconds)
 	{
 		UNameTagWidget::UpdateNameTag(NameTagComponent, GetDisplayName(), GetHealthFraction(), GetWorld());
 	}
+	// CLI test: -TestPauseMenu=1 opens the pause menu 5 s after spawn (local client).
+	static bool bPauseTestArmed = false;
+	if (!bPauseTestArmed && IsLocallyControlled())
+	{
+		bool bPauseTest = false;
+		FParse::Bool(FCommandLine::Get(), TEXT("TestPauseMenu="), bPauseTest);
+		if (bPauseTest)
+		{
+			bPauseTestArmed = true;
+			FTimerHandle H;
+			GetWorldTimerManager().SetTimer(H, []() { SPauseMenu::Show(); }, 5.f, false);
+		}
+	}
+	// Esc toggles the pause menu (local client only).
+	if (IsLocallyControlled())
+	{
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			if (PC->WasInputKeyJustPressed(EKeys::Escape))
+			{
+				if (SPauseMenu::IsVisible())
+				{
+					SPauseMenu::Hide();
+				}
+				else
+				{
+					SPauseMenu::Show();
+				}
+			}
+		}
+	}
 	// Visible crouch feedback (no anim blueprint yet): squash the mesh.
 	if (USkeletalMeshComponent* M = GetMesh())
 	{
-		const float TargetZ = GetCharacterMovement() != nullptr && GetCharacterMovement()->IsCrouching() ? 0.55f : 1.f;
+		const float TargetZ = GetCharacterMovement() != nullptr && GetCharacterMovement()->IsCrouching() ? 0.35f : 1.f;
 		const float CurZ = M->GetRelativeScale3D().Z;
 		M->SetRelativeScale3D(FVector(1.f, 1.f, FMath::FInterpTo(CurZ, TargetZ, DeltaSeconds, 10.f)));
 	}

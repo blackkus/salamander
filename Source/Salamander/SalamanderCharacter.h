@@ -3,12 +3,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Templates/SharedPointer.h"
 #include "SalamanderCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class SWidget;
 class UWidgetComponent;
 
 UCLASS()
@@ -51,6 +53,9 @@ class SALAMANDER_API ASalamanderCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI", meta=(AllowPrivateAccess="true"))
 	UWidgetComponent* NameTagComponent;
+
+	// Crosshair shown on the local client while in game.
+	TSharedPtr<SWidget> CrosshairWidget;
 
 public:
 	ASalamanderCharacter(const FObjectInitializer& ObjectInitializer);

@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerController.h"
 #include "SLoginWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Layout/SBox.h"
 #include "Math/Color.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -101,6 +103,12 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 		}
 	}
 
+	// Game map (client): show a crosshair; the OS cursor is hidden (GameOnly input mode).
+	if (GetWorld()->GetNetMode() != NM_DedicatedServer && !MapName.Contains(TEXT("Menu")))
+	{
+		ShowCrosshair();
+	}
+
 	// Menu map (client started without IP): no pawn, show the Slate login screen.
 	UE_LOG(LogTemp, Log, TEXT("[GameMode] InitGame MapName=%s NetMode=%d"), *MapName, (int32)GetWorld()->GetNetMode());
 	if (GetWorld()->GetNetMode() != NM_DedicatedServer && MapName.Contains(TEXT("Menu")))
@@ -108,6 +116,7 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 		DefaultPawnClass = nullptr;
 		USalamanderInputLib::ApplyAllBindings();
 		ShowLoginMenu();
+		HideCrosshair();
 
 		// CLI test: -ConnectTo=127.0.0.1 -ConnectNick=Bob -ConnectColor=FF8800 -> auto-connect without click.
 		FString ConnectIp;
@@ -526,3 +535,35 @@ void ASalamanderGameMode::SpawnEnemiesAndBoss()
 		{
 			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d boss"), BossCount);
 		}}
+
+void ASalamanderGameMode::ShowCrosshair()
+{
+	if (GEngine == nullptr || GEngine->GameViewport == nullptr || CrosshairWidget.IsValid())
+	{
+		return;
+	}
+	CrosshairWidget = SNew(SBox)
+		.HAlign(HAlign_Center)
+		.VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(TEXT("+")))
+			.ColorAndOpacity(FLinearColor(1.f, 1.f, 1.f, 0.9f))
+			.ShadowOffset(FVector2D(1.f, 1.f))
+			.ShadowColorAndOpacity(FLinearColor::Black)
+		];
+	FSlateFontInfo F = FSlateFontInfo();
+	F.Size = 28;
+	StaticCastSharedPtr<STextBlock>(CrosshairWidget)->SetFont(F);
+	GEngine->GameViewport->AddViewportWidgetContent(CrosshairWidget.ToSharedRef(), 50);
+	UE_LOG(LogTemp, Log, TEXT("[GameMode] crosshair shown"));
+}
+
+void ASalamanderGameMode::HideCrosshair()
+{
+	if (GEngine != nullptr && GEngine->GameViewport != nullptr && CrosshairWidget.IsValid())
+	{
+		GEngine->GameViewport->RemoveViewportWidgetContent(CrosshairWidget.ToSharedRef());
+		CrosshairWidget.Reset();
+	}
+}
