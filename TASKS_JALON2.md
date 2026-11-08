@@ -64,6 +64,10 @@ Les statistiques du jalon 1 (`UStatsComponent`) doivent passer dans GAS, sinon i
 
 **Test :** l'ennemi poursuit, prévient, frappe, et peut être tué à l'épée. Deux joueurs le voient identiquement.
 
+## T11. Un boss [AGENT] — FAIT (commit b01ceab, testé en CLI)
+
+Réalisé : `ABossCharacter` (attaque légère + slam AoE télégraphié en jaune), `DA_BossStats`, récompense à la mort via `DT_BossReward` (XP + objet) pour tous les joueurs, `SaveVersion=2` + migration v1→v2 prouvée (`-TestMigrateV1=` : « migrated profile MigTest from v1 to v2 »), persistance XP prouvée après restart serveur (Bob Level=9 XP=100 rechargé). Bonus : fix « mort au login » (Health/MaxHealth défaut 100).
+
 ## T11. Un boss [AGENT]
 
 **Prompt :**
