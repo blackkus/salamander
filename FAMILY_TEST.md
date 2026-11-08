@@ -6,12 +6,12 @@ on corrigera après.
 
 ## 1. Préparation (à faire une fois dans l'éditeur, ~10 min)
 
-1. Ouvrir la map `Monde_Test` (Content/Maps/Monde_Test).
+1. Ouvrir la map `World_Test` (Content/Maps/World_Test).
 2. **NavMesh obligatoire** : Place Actors > Volumes > `Nav Mesh Bounds Volume`,
    l'étirer pour couvrir toute la zone de jeu (sol + environs). Sans ça, les
    ennemis ne peuvent pas se déplacer. Appuyer sur **P** pour voir le navmesh
    vert recouvrir le sol.
-3. Vérifier que le sol est vert (`M_SolGreen` appliqué) et que chaque personnage
+3. Vérifier que le sol est vert (`M_GroundGreen` appliqué) et que chaque personnage
    apparaît dans la couleur choisie à la connexion.
 4. Fermer l'éditeur (les tests se lancent avec les scripts, pas en Play in Editor,
    pour être au plus proche du vrai jeu en réseau).
@@ -21,7 +21,7 @@ on corrigera après.
 ### Option A — tout sur le même PC (le plus simple)
 
 1. Double-clic sur `Scripts/start_server.bat` → fenêtre serveur noire avec logs.
-2. Double-clic sur `Scripts/start_client.bat` → taper un pseudo (max 16 caractères)
+2. Double-clic sur `Scripts/start_client.bat` → taper un nick (max 16 caractères)
    et une couleur hexa (ex `FF8800` orange, `00FF00` vert, `0088FF` bleu).
    Répéter pour chaque joueur (2 fenêtres client = 2 joueurs).
 
@@ -29,7 +29,7 @@ on corrigera après.
 
 - Sur le PC serveur : `start_server.bat`, puis noter l'IP locale du PC
   (`ipconfig` dans un terminal, adresse IPv4, ex `192.168.1.20`).
-- Sur chaque PC client : `start_client.bat 192.168.1.20` puis pseudo + couleur.
+- Sur chaque PC client : `start_client.bat 192.168.1.20` puis nick + couleur.
 - Depuis l'extérieur du réseau local : rediriger le port UDP 7777 sur la box,
   ou utiliser un VPN type Tailscale.
 

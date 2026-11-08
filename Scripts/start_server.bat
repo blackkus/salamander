@@ -17,7 +17,7 @@ REM =============================
 
 set EDITOR_EXE=%UE_DIR%\Engine\Binaries\Win64\UnrealEditor.exe
 set PROJECT=%PROJECT_DIR%\Salamander.uproject
-set MAP=/Game/Maps/Monde_Test
+set MAP=/Game/Maps/World_Test
 set PORT=7777
 
 echo Starting dedicated server: map %MAP%, UDP port %PORT%

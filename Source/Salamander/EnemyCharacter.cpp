@@ -51,7 +51,7 @@ void AEnemyCharacter::BeginPlay()
 		{
 			AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
-			// Init attributes from DA_EnemyStats via a runtime GE (values are PROVISOIRE in the DA).
+			// Init attributes from DA_EnemyStats via a runtime GE (values are PLACEHOLDER in the DA).
 			const UDA_EnemyStats* Stats = LoadObject<UDA_EnemyStats>(nullptr, TEXT("/Game/Data/DA_EnemyStats"));
 			const float EnemyHealth = Stats ? Stats->Health : 60.f;
 			if (UGameplayEffect* GE = NewObject<UGameplayEffect>(GetTransientPackage()))
@@ -100,7 +100,7 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 	const float AttackRange = Stats ? Stats->AttackRange : 140.f;
 	const float WarnDuration = Stats ? Stats->WarnDuration : 0.8f;
 	const float AttackCooldown = Stats ? Stats->AttackCooldown : 1.5f;
-	const float AggroRange = 1500.f; // PROVISOIRE
+	const float AggroRange = 1500.f; // PLACEHOLDER
 
 	AActor* Target = FindNearestPlayer();
 

@@ -13,19 +13,19 @@ T0 à T6 réalisés, avec ces écarts réels (à connaître) :
   le PlayerController reste le BP du template (non modifié).
 - `IA_Sprint` / `IA_Crouch` créées par **script Python commandlet** (`Scripts/Editor/CreateInputActions.py`) ;
   le mapping clavier (Maj gauche / Ctrl gauche) est ajouté **en C++** dans `PossessedBy` (MapKey/UnmapKey).
-- Map `Maps/Monde_Test` (sol vert, ciel, lumières) + `M_PlayerColor` (paramètre `BodyColor`) + `M_SolGreen`
+- Map `Maps/World_Test` (sol vert, ciel, lumières) + `M_PlayerColor` (paramètre `BodyColor`) + `M_GroundGreen`
   créés par script (`Scripts/Editor/CreateWorldAssets.py`). `GameDefaultMap=/Game/Maps/Menu` (clients),
-  le serveur démarre sur `Monde_Test?listen` (argument).
-- En CLI (`-game`), le moteur écrase l'option `?Name=` : on lit **`?Pseudo=`** en priorité (voir `GetPseudoOption`).
-- Écran de saisie du pseudo/couleur : **Slate 100% C++** (`SLoginWidget`), map `Menu`, bouton → `open <ip>?Pseudo=..&Color=..`.
-- Sauvegarde : `ISaveBackend` + `UFileSaveBackend` (USaveGame, `Saved/SaveGames/<pseudo>.sav`), chargé au login,
-  sauvé au logout + toutes les 60 s. Clé = pseudo, `TODO(identity)`.
+  le serveur démarre sur `World_Test?listen` (argument).
+- En CLI (`-game`), le moteur écrase l'option `?Name=` : on lit **`?Nick=`** en priorité (voir `GetNickOption`).
+- Écran de saisie du nick/couleur : **Slate 100% C++** (`SLoginWidget`), map `Menu`, bouton → `open <ip>?Nick=..&Color=..`.
+- Sauvegarde : `ISaveBackend` + `UFileSaveBackend` (USaveGame, `Saved/SaveGames/<nick>.sav`), chargé au login,
+  sauvé au logout + toutes les 60 s. Clé = nick, `TODO(identity)`.
 - Tests CLI automatisés côté serveur via paramètres : `-TestAutoDamage=<n>`, `-TestAutoLevel=<n>`,
-  `-ConnectTo= -ConnectPseudo= -ConnectColor=`, `-TestAutoMove/Sprint/Crouch=1` (voir AGENTS.md « Leçons »).
+  `-ConnectTo= -ConnectNick= -ConnectColor=`, `-TestAutoMove/Sprint/Crouch=1` (voir AGENTS.md « Leçons »).
 
 Tests validés en CLI (serveur dédié `-server -game` + clients `-game -d3d11`, logs dans `Saved/Logs/NetTest/`) :
 - 2 clients se voient ; `Health` répliquée (100→70→40 vu des 2 côtés) ; couleur par joueur (OnRep_Color) ;
-  pseudo doublon refusé (« Pseudo deja pris »).
+  nick doublon refusé (« Nick deja pris »).
 - Sauvegarde persistante : Level 9 + couleur retrouvés après **redémarrage du serveur**.
 - `net.PktLag=100` + sprint + crouch + déplacement : **0 correction serveur** côté client (prédiction OK).
 - Mort à 0 PV → respawn au point de départ après 3 s (voir jalon 2 étape 1).
@@ -44,7 +44,7 @@ Reste à valider **[TOI]** (éditeur, à la main) :
 ## Jalon 2 : un combat qui a du sens — voir TASKS_JALON2.md (plan detaille, GAS)
 
 Ordre : T7 migrer les stats vers GAS (AttributeSet Health/MaxHealth, ASC sur PlayerState, DebugDamage via GameplayEffect)
--> T8 mort/reapparition via GameplayTag + DA_DeathRules (PROVISOIRE) -> T9 attaque epee 3 coups (GA_MeleeAttack,
+-> T8 mort/reapparition via GameplayTag + DA_DeathRules (PLACEHOLDER) -> T9 attaque epee 3 coups (GA_MeleeAttack,
 traces serveur, DA_MeleeAttackStats) -> T10 ennemi simple (machine a etats C++, attaque annoncee) -> T11 boss +
 recompense sauvegardee (migration SaveVersion) -> T12 test en famille.
 

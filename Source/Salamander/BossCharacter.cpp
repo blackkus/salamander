@@ -66,7 +66,7 @@ void ABossCharacter::Tick(float DeltaSeconds)
 	const float WarnDuration = Stats ? Stats->WarnDuration : 0.8f;
 	const float SlamWarnDuration = Stats ? Stats->SlamWarnDuration : 1.5f;
 	const float AttackCooldown = Stats ? Stats->AttackCooldown : 1.2f;
-	const float AggroRange = 2500.f; // PROVISOIRE
+	const float AggroRange = 2500.f; // PLACEHOLDER
 
 	AActor* Target = FindNearestPlayer();
 

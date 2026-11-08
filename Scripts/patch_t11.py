@@ -95,8 +95,8 @@ void ASalamanderGameMode::OnBossKilled(ABossCharacter* Boss)
 	// Reward from the Data Table DT_BossReward (row "Boss1").
 	UDataTable* RewardTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_BossReward"));
 	const FRewardRow* Row = RewardTable != nullptr ? RewardTable->FindRow<FRewardRow>(FName("Boss1"), TEXT("BossReward")) : nullptr;
-	const int32 XPReward = Row ? Row->XP : 100;      // PROVISOIRE fallback
-	const FString ItemName = Row ? Row->ItemName : TEXT("FictifSword"); // PROVISOIRE fallback
+	const int32 XPReward = Row ? Row->XP : 100;      // PLACEHOLDER fallback
+	const FString ItemName = Row ? Row->ItemName : TEXT("FictifSword"); // PLACEHOLDER fallback
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
@@ -116,7 +116,7 @@ print('GM_APPEND_OK')
 patch('Source/Salamander/SalamanderMaterialLib.h', [
 ('#include "DA_EnemyStats.h"', '#include "DA_EnemyStats.h"\n#include "DA_BossStats.h"'),
 ("\tstatic UDA_EnemyStats* EnsureEnemyStatsAsset();\n#endif",
- "\tstatic UDA_EnemyStats* EnsureEnemyStatsAsset();\n\n\t// Creates /Game/Data/DA_BossStats if missing (PROVISOIRE values).\n\tUFUNCTION(BlueprintCallable, Category=\"Salamander|Editor\")\n\tstatic UDA_BossStats* EnsureBossStatsAsset();\n\n\t// Creates /Game/Data/DT_BossReward (DataTable, row Boss1) if missing.\n\tUFUNCTION(BlueprintCallable, Category=\"Salamander|Editor\")\n\tstatic class UDataTable* EnsureBossRewardTable();\n#endif"),
+ "\tstatic UDA_EnemyStats* EnsureEnemyStatsAsset();\n\n\t// Creates /Game/Data/DA_BossStats if missing (PLACEHOLDER values).\n\tUFUNCTION(BlueprintCallable, Category=\"Salamander|Editor\")\n\tstatic UDA_BossStats* EnsureBossStatsAsset();\n\n\t// Creates /Game/Data/DT_BossReward (DataTable, row Boss1) if missing.\n\tUFUNCTION(BlueprintCallable, Category=\"Salamander|Editor\")\n\tstatic class UDataTable* EnsureBossRewardTable();\n#endif"),
 ])
 
 # MaterialLib.cpp: implementations
@@ -140,7 +140,7 @@ UDataTable* USalamanderMaterialLib::EnsureBossRewardTable()
 	UPackage* Pkg = CreatePackage(TEXT("/Game/Data"));
 	Table = NewObject<UDataTable>(Pkg, UDataTable::StaticClass(), TEXT("DT_BossReward"), RF_Public | RF_Standalone);
 	Table->RowStruct = FRewardRow::StaticStruct();
-	// PROVISOIRE reward row.
+	// PLACEHOLDER reward row.
 	FRewardRow Row;
 	Row.XP = 100;
 	Row.ItemName = TEXT("FictifSword");

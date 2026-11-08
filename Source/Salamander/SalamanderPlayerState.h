@@ -32,7 +32,7 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Stats")
 	int32 XP;
 
-	// Pseudo chosen at connect (URL option ?Pseudo= / ?Name=...). Server only.
+	// Nick chosen at connect (URL option ?Nick= / ?Name=...). Server only.
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Identity")
 	FString PlayerName;
 

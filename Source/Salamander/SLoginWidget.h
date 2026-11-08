@@ -6,7 +6,7 @@
 class ASalamanderGameMode;
 class SEditableTextBox;
 
-// Login screen (Menu map): IP + pseudo + color + button. 100% Slate, no Blueprint.
+// Login screen (Menu map): IP + nick + color + button. 100% Slate, no Blueprint.
 class SALAMANDER_API SLoginWidget : public SCompoundWidget
 {
 public:
@@ -21,6 +21,6 @@ private:
 
 	TWeakObjectPtr<ASalamanderGameMode> GameMode;
 	TSharedPtr<SEditableTextBox> IpBox;
-	TSharedPtr<SEditableTextBox> PseudoBox;
+	TSharedPtr<SEditableTextBox> NickBox;
 	TSharedPtr<SEditableTextBox> ColorBox;
 };

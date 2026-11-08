@@ -37,7 +37,7 @@ bool UFileSaveBackend::SaveProfile(const FString& Key, const UPlayerProfile* Pro
 	{
 		return false;
 	}
-	// The key is the pseudo: deliberately simple and NOT secure.
+	// The key is the nick: deliberately simple and NOT secure.
 	// TODO(identity): replace with a unique account id before any public release.
 	return UGameplayStatics::SaveGameToSlot(const_cast<UPlayerProfile*>(Profile), Key, 0);
 }

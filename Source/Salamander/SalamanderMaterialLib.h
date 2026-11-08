@@ -20,19 +20,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Salamander|Material")
 	static class UMaterialExpressionVectorParameter* CreateVectorParameterNode(class UMaterial* Material, FName ParamName, FLinearColor DefaultValue);
 
-	// Creates /Game/Data/DA_DeathRules if missing (PROVISOIRE RespawnDelay=5s).
+	// Creates /Game/Data/DA_DeathRules if missing (PLACEHOLDER RespawnDelay=5s).
 	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
 	static UDA_DeathRules* EnsureDeathRulesAsset();
 
-	// Creates /Game/Data/DA_MeleeAttackStats if missing (PROVISOIRE values).
+	// Creates /Game/Data/DA_MeleeAttackStats if missing (PLACEHOLDER values).
 	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
 	static UDA_MeleeAttackStats* EnsureMeleeStatsAsset();
 
-	// Creates /Game/Data/DA_EnemyStats if missing (PROVISOIRE values).
+	// Creates /Game/Data/DA_EnemyStats if missing (PLACEHOLDER values).
 	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
 	static UDA_EnemyStats* EnsureEnemyStatsAsset();
 
-	// Creates /Game/Data/DA_BossStats if missing (PROVISOIRE values).
+	// Creates /Game/Data/DA_BossStats if missing (PLACEHOLDER values).
 	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
 	static UDA_BossStats* EnsureBossStatsAsset();
 

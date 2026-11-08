@@ -11,7 +11,7 @@ Même méthode que le jalon 1 : une tâche à la fois, un commit par tâche réu
 - Source des animations et des modèles 3D.
 - Effet exact d'un scénario unique accompli.
 
-Règle : tout ce qui dépend de ces décisions est une **valeur dans un Data Asset ou une Data Table**, avec une valeur provisoire marquée `PROVISOIRE`. Changer d'avis ne doit pas demander de toucher au code.
+Règle : tout ce qui dépend de ces décisions est une **valeur dans un Data Asset ou une Data Table**, avec une valeur provisoire marquée `PLACEHOLDER`. Changer d'avis ne doit pas demander de toucher au code.
 
 ## À ajouter dans AGENTS.md avant de commencer
 
@@ -25,7 +25,7 @@ Règle : tout ce qui dépend de ces décisions est une **valeur dans un Data Ass
 - Les GameplayTags sont déclarés en C++ ou dans le fichier de configuration texte (DefaultGameplayTags.ini).
 - La détection des touches se fait sur le serveur, par traces de collision pendant une fenêtre de temps définie dans la compétence. Elle ne dépend pas d'une animation (les animations ne sont pas encore choisies).
 - Les ennemis sont pilotés par du code C++ (machine à états simple), pas par des Behavior Trees (binaires).
-- Valeurs de mort et d'équilibrage : dans un Data Asset, jamais en dur. Marque PROVISOIRE ce qui n'est pas décidé.
+- Valeurs de mort et d'équilibrage : dans un Data Asset, jamais en dur. Marque PLACEHOLDER ce qui n'est pas décidé.
 ```
 
 ---
@@ -39,10 +39,10 @@ Les statistiques du jalon 1 (`UStatsComponent`) doivent passer dans GAS, sinon i
 
 **Test :** à 2 clients, `DebugDamage 30` sur le serveur ramène la santé de 100 à 70, et chaque client voit la valeur (log). Les joueurs se connectent toujours et retrouvent leur sauvegarde.
 
-## T8. Mort et réapparition (provisoire) [AGENT] — FAIT (tag State.Dead, DA_DeathRules PROVISOIRE 5s, entrees bloquees)
+## T8. Mort et réapparition (provisoire) [AGENT] — FAIT (tag State.Dead, DA_DeathRules PLACEHOLDER 5s, entrees bloquees)
 
 **Prompt :**
-> Lis AGENTS.md. À 0 PV, le serveur marque le joueur comme mort (GameplayTag), bloque ses entrées, attend un délai puis le réapparaît au point de départ avec la santé pleine. Délai et lieu viennent d'un Data Asset `DA_DeathRules`. Valeurs provisoires : 5 secondes, point de départ du niveau, aucune perte, marquées `PROVISOIRE`. Prévois dans ce Data Asset un champ `RespawnLocationType` (point de départ ou lieu enregistré), sans implémenter le lieu enregistré pour l'instant.
+> Lis AGENTS.md. À 0 PV, le serveur marque le joueur comme mort (GameplayTag), bloque ses entrées, attend un délai puis le réapparaît au point de départ avec la santé pleine. Délai et lieu viennent d'un Data Asset `DA_DeathRules`. Valeurs provisoires : 5 secondes, point de départ du niveau, aucune perte, marquées `PLACEHOLDER`. Prévois dans ce Data Asset un champ `RespawnLocationType` (point de départ ou lieu enregistré), sans implémenter le lieu enregistré pour l'instant.
 
 **Test :** un joueur à 0 PV meurt, réapparaît après le délai, et les autres clients voient la mort et la réapparition.
 

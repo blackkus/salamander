@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Creates M_PlayerColor (BodyColor vector param), M_SolGreen, and the /Game/Maps/Monde_Test map
+# Creates M_PlayerColor (BodyColor vector param), M_GroundGreen, and the /Game/Maps/World_Test map
 # (green floor, SkyAtmosphere, sun, SkyLight, PlayerStart). Idempotent.
 # Lancer via : UnrealEditor-Cmd.exe <projet> -run=pythonscript -script=<ce fichier> -log -unattended -nullrhi
 import unreal
@@ -24,13 +24,13 @@ def build_sol_green(mat):
     node.constant = unreal.LinearColor(0.05, 0.45, 0.08, 1.0)
     lib.connect_material_property(node, '', unreal.MaterialProperty.MP_BASE_COLOR)
 
-for path, fn in ((MATS + '/M_PlayerColor', build_player_color), (MATS + '/M_SolGreen', build_sol_green)):
+for path, fn in ((MATS + '/M_PlayerColor', build_player_color), (MATS + '/M_GroundGreen', build_sol_green)):
     mat = create_asset(path, MATS, unreal.Material, unreal.MaterialFactoryNew())
     fn(mat)
     unreal.MaterialEditingLibrary.recompile_material(mat)
     unreal.EditorAssetLibrary.save_asset(path)
 
-map_path = '/Game/Maps/Monde_Test'
+map_path = '/Game/Maps/World_Test'
 les = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 if not unreal.EditorAssetLibrary.does_asset_exist(map_path):
     les.new_level(map_path)
@@ -47,7 +47,7 @@ floor = spawn(unreal.StaticMeshActor, unreal.Vector(0, 0, -10), unreal.Rotator()
 comp = floor.static_mesh_component
 comp.set_mobility(unreal.ComponentMobility.STATIC)
 comp.set_static_mesh(unreal.load_asset('/Game/LevelPrototyping/Meshes/SM_Plane'))
-comp.set_material(0, unreal.load_asset(MATS + '/M_SolGreen'))
+comp.set_material(0, unreal.load_asset(MATS + '/M_GroundGreen'))
 comp.set_world_scale3d(unreal.Vector(200, 200, 1))
 
 spawn(unreal.PlayerStart, unreal.Vector(0, 0, 100), unreal.Rotator())
@@ -57,4 +57,4 @@ spawn(unreal.SkyLight, unreal.Vector(0, 0, 2000), unreal.Rotator())
 spawn(unreal.SkyAtmosphere, unreal.Vector(0, 0, 0), unreal.Rotator())
 
 les.save_current_level()
-unreal.log('Monde_Test OK: green floor, blue sky, sun, SkyLight, PlayerStart + M_PlayerColor/M_SolGreen')
+unreal.log('World_Test OK: green floor, blue sky, sun, SkyLight, PlayerStart + M_PlayerColor/M_GroundGreen')

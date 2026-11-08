@@ -32,12 +32,12 @@
 #include "TimerManager.h"
 
 // In CLI (-game), the engine overwrites the Name option with the local nickname; so we read
-// the "Pseudo" option first (sent by start_client.bat), "Name" as fallback (editor).
-static FString GetPseudoOption(const FString& Options)
+// the "Nick" option first (sent by start_client.bat), "Name" as fallback (editor).
+static FString GetNickOption(const FString& Options)
 {
-	if (UGameplayStatics::HasOption(Options, TEXT("Pseudo")))
+	if (UGameplayStatics::HasOption(Options, TEXT("Nick")))
 	{
-		return UGameplayStatics::ParseOption(Options, TEXT("Pseudo"));
+		return UGameplayStatics::ParseOption(Options, TEXT("Nick"));
 	}
 	return UGameplayStatics::ParseOption(Options, TEXT("Name"));
 }
@@ -63,7 +63,7 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 	SaveBackendObj = NewObject<UFileSaveBackend>(this);
 	SaveBackend = Cast<ISaveBackend>(SaveBackendObj.Get());
 
-	// Death rules data asset (PROVISOIRE values).
+	// Death rules data asset (PLACEHOLDER values).
 	DeathRules = LoadObject<UDA_DeathRules>(nullptr, TEXT("/Game/Data/DA_DeathRules"));
 
 	// Spawn simple enemies (server only). Count via -EnemyCount=<n> (default 2).
@@ -129,14 +129,14 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 		DefaultPawnClass = nullptr;
 		ShowLoginMenu();
 
-		// CLI test: -ConnectTo=127.0.0.1 -ConnectPseudo=Bob -ConnectColor=FF8800 -> auto-connect without click.
+		// CLI test: -ConnectTo=127.0.0.1 -ConnectNick=Bob -ConnectColor=FF8800 -> auto-connect without click.
 		FString ConnectIp;
 		if (FParse::Value(FCommandLine::Get(), TEXT("ConnectTo="), ConnectIp) && !ConnectIp.IsEmpty())
 		{
-			FString ConnectPseudo, ConnectColor;
-			FParse::Value(FCommandLine::Get(), TEXT("ConnectPseudo="), ConnectPseudo);
+			FString ConnectNick, ConnectColor;
+			FParse::Value(FCommandLine::Get(), TEXT("ConnectNick="), ConnectNick);
 			FParse::Value(FCommandLine::Get(), TEXT("ConnectColor="), ConnectColor);
-			ConnectToServer(ConnectIp, ConnectPseudo, ConnectColor);
+			ConnectToServer(ConnectIp, ConnectNick, ConnectColor);
 		}
 	}
 }
@@ -162,9 +162,9 @@ void ASalamanderGameMode::HideLoginMenu()
 	}
 }
 
-void ASalamanderGameMode::ConnectToServer(const FString& Ip, const FString& Pseudo, const FString& Color)
+void ASalamanderGameMode::ConnectToServer(const FString& Ip, const FString& Nick, const FString& Color)
 {
-	const FString Url = FString::Printf(TEXT("%s?Pseudo=%s?Color=%s"), *Ip, *Pseudo, *Color);
+	const FString Url = FString::Printf(TEXT("%s?Nick=%s?Color=%s"), *Ip, *Nick, *Color);
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	UE_LOG(LogTemp, Log, TEXT("[GameMode] Connecting to %s (PC=%d)"), *Url, PC != nullptr);
 	HideLoginMenu();
@@ -183,15 +183,15 @@ void ASalamanderGameMode::PreLogin(const FString& Options, const FString& Addres
 		return; // already rejected by the parent
 	}
 
-	const FString Name = GetPseudoOption(Options);
+	const FString Name = GetNickOption(Options);
 	if (Name.IsEmpty())
 	{
-		ErrorMessage = TEXT("Pseudo required: open <ip>?Name=Bob?Color=FF8800");
+		ErrorMessage = TEXT("Nick required: open <ip>?Name=Bob?Color=FF8800");
 		return;
 	}
 	if (Name.Len() > 16)
 	{
-		ErrorMessage = TEXT("Pseudo too long (16 chars max)");
+		ErrorMessage = TEXT("Nick too long (16 chars max)");
 		return;
 	}
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
@@ -200,7 +200,7 @@ void ASalamanderGameMode::PreLogin(const FString& Options, const FString& Addres
 		{
 			if (PS->PlayerName.Equals(Name, ESearchCase::IgnoreCase))
 			{
-				ErrorMessage = TEXT("Pseudo already taken");
+				ErrorMessage = TEXT("Nick already taken");
 				return;
 			}
 		}
@@ -215,7 +215,7 @@ APlayerController* ASalamanderGameMode::Login(UPlayer* NewPlayer, ENetRole InRem
 		return nullptr;
 	}
 
-	const FString Name = GetPseudoOption(Options);
+	const FString Name = GetNickOption(Options);
 	const FString ColorHex = UGameplayStatics::ParseOption(Options, TEXT("Color"));
 
 	if (ASalamanderPlayerState* PS = PC->GetPlayerState<ASalamanderPlayerState>())
@@ -445,7 +445,7 @@ void ASalamanderGameMode::HandlePlayerDeath(APawn* Pawn)
 		}
 	}
 
-	const float Delay = DeathRules != nullptr ? DeathRules->RespawnDelay : 3.f; // PROVISOIRE value inside the DA
+	const float Delay = DeathRules != nullptr ? DeathRules->RespawnDelay : 3.f; // PLACEHOLDER value inside the DA
 	if (Controller != nullptr)
 	{
 		Controller->UnPossess();
@@ -483,8 +483,8 @@ void ASalamanderGameMode::OnBossKilled(ABossCharacter* Boss)
 	// Reward from the Data Table DT_BossReward (row "Boss1").
 	UDataTable* RewardTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_BossReward"));
 	const FRewardRow* Row = RewardTable != nullptr ? RewardTable->FindRow<FRewardRow>(FName("Boss1"), TEXT("BossReward")) : nullptr;
-	const int32 XPReward = Row ? Row->XP : 100;      // PROVISOIRE fallback
-	const FString ItemName = Row ? Row->ItemName : TEXT("FictifSword"); // PROVISOIRE fallback
+	const int32 XPReward = Row ? Row->XP : 100;      // PLACEHOLDER fallback
+	const FString ItemName = Row ? Row->ItemName : TEXT("FictifSword"); // PLACEHOLDER fallback
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{

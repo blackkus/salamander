@@ -21,7 +21,7 @@ public:
 	// Login screen (Menu map, local client only).
 	void ShowLoginMenu();
 	void HideLoginMenu();
-	void ConnectToServer(const FString& Ip, const FString& Pseudo, const FString& Color);
+	void ConnectToServer(const FString& Ip, const FString& Nick, const FString& Color);
 
 	// Server console commands.
 	UFUNCTION(Exec)
@@ -50,7 +50,7 @@ private:
 
 	class ISaveBackend* SaveBackend = nullptr;
 
-	// Death rules (PROVISOIRE values inside).
+	// Death rules (PLACEHOLDER values inside).
 	UPROPERTY()
 	TObjectPtr<class UDA_DeathRules> DeathRules;
 

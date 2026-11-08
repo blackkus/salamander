@@ -42,7 +42,7 @@ UDA_DeathRules* USalamanderMaterialLib::EnsureDeathRulesAsset()
 	}
 	UPackage* Pkg = CreatePackage(TEXT("/Game/Data"));
 	DA = NewObject<UDA_DeathRules>(Pkg, UDA_DeathRules::StaticClass(), TEXT("DA_DeathRules"), RF_Public | RF_Standalone);
-	DA->RespawnDelay = 5.f; // PROVISOIRE
+	DA->RespawnDelay = 5.f; // PLACEHOLDER
 	DA->MarkPackageDirty();
 	const FString FilePath = FPackageName::LongPackageNameToFilename(TEXT("/Game/Data/DA_DeathRules"), FPackageName::GetAssetPackageExtension());
 	UPackage::Save(Pkg, DA, *FilePath, FSavePackageArgs());
@@ -95,7 +95,7 @@ UDataTable* USalamanderMaterialLib::EnsureBossRewardTable()
 	UPackage* Pkg = CreatePackage(TEXT("/Game/Data"));
 	Table = NewObject<UDataTable>(Pkg, UDataTable::StaticClass(), TEXT("DT_BossReward"), RF_Public | RF_Standalone);
 	Table->RowStruct = FRewardRow::StaticStruct();
-	// PROVISOIRE reward row.
+	// PLACEHOLDER reward row.
 	FRewardRow Row;
 	Row.XP = 100;
 	Row.ItemName = TEXT("FictifSword");
