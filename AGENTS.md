@@ -59,6 +59,8 @@ Pénalités de mort, qui héberge les serveurs en production, PvP, effet exact d
 - **USaveGame** : non copiable par `operator=` → copier champ par champ. `FColor::ToLinearColor()` n'existe plus en 5.8 → `FLinearColor(FColor)`.
 - **La console du serveur (-server -log) n'est PAS pilotable via un pipe stdin** → tests CLI auto via paramètres (`-TestAutoDamage=`, `-TestAutoLevel=`, `-ConnectTo=`, `-TestAutoMove/Sprint/Crouch=`).
 - Toujours lancer les commandlets éditeur Python avec `-unattended -nullrhi -nosound -log`.
+- **Jalon 2 / T11 — `InternalServerTryActivateAbility failed` n'était PAS un bug de prédiction** : la cause était le bug « mort au login » (Health=0 par défaut → tag State.Dead → `CanActivateAbility` faux côté serveur). Corrigé en donnant Health/MaxHealth = 100 par défaut dans le constructeur de `USalamanderAttributeSet`. Test CLI après correction : 0 rejet serveur, 44/44 swings prédits côté client (`-TestAutoAttack=1`), dégâts appliqués par le serveur (4×25 → ennemi mort). La prédiction client de `GA_MeleeAttack` (LocalPredicted) fonctionne donc sans autre changement.
+- **Combo mêlée** : `MeleeComboIndex` n'avance que si deux swings sont à moins de `ComboWindow` (0.6 s, PROVISOIRE dans DA_MeleeAttackStats). Un auto-attaque toutes les 0.7 s retombe toujours à combo=0 — c'est voulu, à valider au test famille.
 
 ## Règles GAS (jalon 2)
 - L'AbilitySystemComponent des joueurs est sur le PlayerState (il survit à la mort et à la réapparition). Pour les ennemis et boss, il est sur le personnage.
