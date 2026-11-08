@@ -11,7 +11,8 @@
 UGA_MeleeAttack::UGA_MeleeAttack()
 {
 	// Tag used to trigger this ability from the input action.
-	AbilityTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.MeleeAttack")));
+	// no error if not registered yet: native tags are registered in module StartupModule, after CDO construction
+	AbilityTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.MeleeAttack"), false));
 	// Instant-like ability: we end it right away; the hit lands after HitDelay via a timer.
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;

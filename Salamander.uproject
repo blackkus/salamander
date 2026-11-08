@@ -3,28 +3,17 @@
 	"EngineAssociation": "{06F3E561-4717-676B-F2C5-0E946A0D7942}",
 	"Category": "",
 	"Description": "",
+	"Plugins": [
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
+		}
+	],
 	"Modules": [
 		{
 			"Name": "Salamander",
 			"Type": "Runtime",
 			"Phase": "Default"
 		}
-	],
-	"Plugins": [
-		{
-			"Name": "ModelingToolsEditorMode",
-			"Enabled": true,
-			"TargetAllowList": [
-				"Editor"
-			]
-		},
-		{
-			"Name": "GameplayStateTree",
-			"Enabled": true
-		},
-		{
-			"Name": "GameplayAbilities",
-			"Enabled": true
-		}
 	]
-}
+}

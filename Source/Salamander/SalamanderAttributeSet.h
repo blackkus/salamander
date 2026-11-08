@@ -11,6 +11,8 @@ class SALAMANDER_API USalamanderAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 
 public:
+	USalamanderAttributeSet();
+
 	// Current HP. Any change goes through a GameplayEffect (server).
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Health, Category="Attributes")
 	FGameplayAttributeData Health;

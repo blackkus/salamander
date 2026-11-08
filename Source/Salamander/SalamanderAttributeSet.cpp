@@ -6,6 +6,15 @@
 #include "GameplayTagContainer.h"
 #include "SalamanderGameMode.h"
 
+USalamanderAttributeSet::USalamanderAttributeSet()
+{
+	// Defaults: a fresh attribute set must not read 0 HP (would trigger the death path before GE_InitStats).
+	Health.SetBaseValue(100.f);
+	Health.SetCurrentValue(100.f);
+	MaxHealth.SetBaseValue(100.f);
+	MaxHealth.SetCurrentValue(100.f);
+}
+
 void USalamanderAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

@@ -28,6 +28,10 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Stats")
 	int32 Level;
 
+	// XP (rewards). Server only.
+	UPROPERTY(Replicated, BlueprintReadOnly, Category="Stats")
+	int32 XP;
+
 	// Pseudo chosen at connect (URL option ?Pseudo= / ?Name=...). Server only.
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Identity")
 	FString PlayerName;

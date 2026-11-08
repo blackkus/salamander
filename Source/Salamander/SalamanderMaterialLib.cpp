@@ -5,6 +5,9 @@
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
 #include "DA_DeathRules.h"
+#include "DA_BossStats.h"
+#include "RewardTypes.h"
+#include "Engine/DataTable.h"
 #include "Misc/PackageName.h"
 #include "UObject/SavePackage.h"
 #include "UObject/UObjectGlobals.h"
@@ -72,5 +75,34 @@ UDA_MeleeAttackStats* USalamanderMaterialLib::EnsureMeleeStatsAsset()
 UDA_EnemyStats* USalamanderMaterialLib::EnsureEnemyStatsAsset()
 {
 	return EnsureDataAsset<UDA_EnemyStats>(TEXT("/Game/Data/DA_EnemyStats"), TEXT("DA_EnemyStats"));
+}
+#endif
+
+
+#if WITH_EDITOR
+UDA_BossStats* USalamanderMaterialLib::EnsureBossStatsAsset()
+{
+	return EnsureDataAsset<UDA_BossStats>(TEXT("/Game/Data/DA_BossStats"), TEXT("DA_BossStats"));
+}
+
+UDataTable* USalamanderMaterialLib::EnsureBossRewardTable()
+{
+	UDataTable* Table = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_BossReward"));
+	if (Table != nullptr)
+	{
+		return Table;
+	}
+	UPackage* Pkg = CreatePackage(TEXT("/Game/Data"));
+	Table = NewObject<UDataTable>(Pkg, UDataTable::StaticClass(), TEXT("DT_BossReward"), RF_Public | RF_Standalone);
+	Table->RowStruct = FRewardRow::StaticStruct();
+	// PROVISOIRE reward row.
+	FRewardRow Row;
+	Row.XP = 100;
+	Row.ItemName = TEXT("FictifSword");
+	Table->AddRow(FName("Boss1"), Row);
+	Table->MarkPackageDirty();
+	const FString FilePath = FPackageName::LongPackageNameToFilename(TEXT("/Game/Data/DT_BossReward"), FPackageName::GetAssetPackageExtension());
+	UPackage::Save(Pkg, Table, *FilePath, FSavePackageArgs());
+	return Table;
 }
 #endif

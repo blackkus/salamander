@@ -14,4 +14,5 @@ class SALAMANDER_API UFileSaveBackend : public UObject, public ISaveBackend
 public:
 	virtual bool LoadProfile(const FString& Key, UPlayerProfile* OutProfile) override;
 	virtual bool SaveProfile(const FString& Key, const UPlayerProfile* Profile) override;
+	virtual void MigrateProfile(UPlayerProfile* Profile) override;
 };

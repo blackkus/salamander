@@ -10,6 +10,8 @@
 #include "DA_EnemyStats.h"
 #include "GE_Damage.h"
 #include "SalamanderAttributeSet.h"
+#include "BossCharacter.h"
+#include "SalamanderGameMode.h"
 
 AEnemyCharacter::AEnemyCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -205,6 +207,14 @@ void AEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 	{
 		State = EEnemyState::Dead;
 		UE_LOG(LogTemp, Log, TEXT("[Enemy] %s died"), *GetName());
+		// A boss dying gives the reward to all connected players (server).
+		if (ABossCharacter* Boss = Cast<ABossCharacter>(this))
+		{
+			if (ASalamanderGameMode* GM = GetWorld()->GetAuthGameMode<ASalamanderGameMode>())
+			{
+				GM->OnBossKilled(Boss);
+			}
+		}
 		Destroy(); // at 0 HP the enemy disappears
 	}
 }

@@ -13,7 +13,7 @@ class SALAMANDER_API UPlayerProfile : public USaveGame
 public:
 	// Save format version (migration via ISaveBackend::MigrateProfile).
 	UPROPERTY()
-	int32 SaveVersion = 1;
+	int32 SaveVersion = 2;
 
 	UPROPERTY()
 	FString Name;
@@ -23,4 +23,11 @@ public:
 
 	UPROPERTY()
 	int32 Level = 1;
+
+	// Added in SaveVersion 2 (boss rewards).
+	UPROPERTY()
+	int32 XP = 0;
+
+	UPROPERTY()
+	TArray<FString> Items;
 };

@@ -39,6 +39,9 @@ public:
 	// Player death (HP = 0): destroys the pawn and respawns at the start point after 3 s.
 	void HandlePlayerDeath(class APawn* Pawn);
 
+	// Boss killed: gives the reward (DT_BossReward) to every connected player and saves profiles.
+	void OnBossKilled(class ABossCharacter* Boss);
+
 private:
 	TSharedPtr<class SLoginWidget> LoginWidget;
 

@@ -22,6 +22,9 @@
 #include "GE_Damage.h"
 #include "DA_DeathRules.h"
 #include "EnemyCharacter.h"
+#include "BossCharacter.h"
+#include "RewardTypes.h"
+#include "Engine/DataTable.h"
 #include "SalamanderCharacter.h"
 #include "GameplayTagContainer.h"
 #include "SalamanderAttributeSet.h"
@@ -80,10 +83,44 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 			GetWorld()->SpawnActor<AEnemyCharacter>(AEnemyCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
 		}
 		UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d enemies"), EnemyCount);
+
+		// One boss further away (-BossCount=<n>, default 1).
+		int32 BossCount = 1;
+		FParse::Value(FCommandLine::Get(), TEXT("BossCount="), BossCount);
+		for (int32 i = 0; i < BossCount; i++)
+		{
+			const FVector Loc = BaseLoc + FVector(900.f, 500.f, 0.f);
+			GetWorld()->SpawnActor<ABossCharacter>(ABossCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
+		}
+		if (BossCount > 0)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d boss"), BossCount);
+		}
 	}
 
 	// Periodic save every 60 s.
 	GetWorldTimerManager().SetTimer(SaveTimerHandle, this, &ASalamanderGameMode::SaveAllProfiles, 60.f, true);
+
+	// CLI test: -TestMigrateV1=<key> writes a v1 profile, then loads it back through the save backend.
+	FString MigrateKey;
+	if (FParse::Value(FCommandLine::Get(), TEXT("TestMigrateV1="), MigrateKey) && !MigrateKey.IsEmpty() && SaveBackend != nullptr)
+	{
+		UPlayerProfile* V1 = NewObject<UPlayerProfile>(this);
+		V1->SaveVersion = 1;
+		V1->Name = MigrateKey;
+		V1->Level = 7;
+		V1->ColorRgb = FLinearColor(0.1f, 0.2f, 0.3f, 1.f);
+		SaveBackend->SaveProfile(MigrateKey, V1);
+		UPlayerProfile* Loaded = NewObject<UPlayerProfile>(this);
+		if (SaveBackend->LoadProfile(MigrateKey, Loaded))
+		{
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] TestMigrateV1 %s -> SaveVersion=%d Level=%d XP=%d"), *MigrateKey, Loaded->SaveVersion, Loaded->Level, Loaded->XP);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[GameMode] TestMigrateV1 %s load failed"), *MigrateKey);
+		}
+	}
 
 	// Menu map (client started without IP): no pawn, show the Slate login screen.
 	UE_LOG(LogTemp, Log, TEXT("[GameMode] InitGame MapName=%s NetMode=%d"), *MapName, (int32)GetWorld()->GetNetMode());
@@ -196,8 +233,9 @@ APlayerController* ASalamanderGameMode::Login(UPlayer* NewPlayer, ENetRole InRem
 			if (SaveBackend->LoadProfile(PS->PlayerName, Loaded))
 			{
 				PS->Level = Loaded->Level;
+				PS->XP = Loaded->XP;
 				PS->ColorRgb = Loaded->ColorRgb;
-				UE_LOG(LogTemp, Log, TEXT("[GameMode] Loaded profile for %s: Level=%d"), *PS->PlayerName, PS->Level);
+				UE_LOG(LogTemp, Log, TEXT("[GameMode] Loaded profile for %s: Level=%d XP=%d"), *PS->PlayerName, PS->Level, PS->XP);
 			}
 		}
 
@@ -239,6 +277,32 @@ void ASalamanderGameMode::PostLogin(APlayerController* NewPlayer)
 				UE_LOG(LogTemp, Log, TEXT("[GameMode] TestAutoMelee: pawn cast failed"));
 			}
 		}, 3.f, false);
+	}
+
+	// CLI test: damage the boss from the server (-TestAutoBossDamage=<n>).
+	int32 BossDamage = 0;
+	if (FParse::Value(FCommandLine::Get(), TEXT("TestAutoBossDamage="), BossDamage) && BossDamage > 0)
+	{
+		const int32 Amount = BossDamage;
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] TestAutoBossDamage armed amount=%d"), Amount);
+		FTimerHandle BH;
+		GetWorldTimerManager().SetTimer(BH, [this, Amount]()
+		{
+			int32 Found = 0;
+			for (TActorIterator<ABossCharacter> It(GetWorld()); It; ++It)
+			{
+				++Found;
+				if (UAbilitySystemComponent* BossASC = It->AbilitySystemComponent)
+				{
+					UGE_Damage::ApplyTo(BossASC, static_cast<float>(Amount));
+					UE_LOG(LogTemp, Log, TEXT("[GameMode] TestAutoBossDamage %d on %s"), Amount, *It->GetName());
+				}
+			}
+			if (Found == 0)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[GameMode] TestAutoBossDamage: no boss in world"));
+			}
+		}, 5.f, true);
 	}
 
 	int32 AutoLevel = 0;
@@ -291,6 +355,7 @@ void ASalamanderGameMode::SaveProfileFor(const ASalamanderPlayerState* PS)
 	Profile->Name = PS->PlayerName;
 	Profile->ColorRgb = PS->ColorRgb;
 	Profile->Level = PS->Level;
+	Profile->XP = PS->XP;
 
 	if (SaveBackend->SaveProfile(PS->PlayerName, Profile))
 	{
@@ -407,5 +472,27 @@ void ASalamanderGameMode::HandlePlayerDeath(APawn* Pawn)
 	if (Pawn != nullptr)
 	{
 		Pawn->Destroy();
+	}
+}
+
+
+void ASalamanderGameMode::OnBossKilled(ABossCharacter* Boss)
+{
+	UE_LOG(LogTemp, Log, TEXT("[GameMode] boss %s killed -> reward to all players"), Boss ? *Boss->GetName() : TEXT("?"));
+
+	// Reward from the Data Table DT_BossReward (row "Boss1").
+	UDataTable* RewardTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_BossReward"));
+	const FRewardRow* Row = RewardTable != nullptr ? RewardTable->FindRow<FRewardRow>(FName("Boss1"), TEXT("BossReward")) : nullptr;
+	const int32 XPReward = Row ? Row->XP : 100;      // PROVISOIRE fallback
+	const FString ItemName = Row ? Row->ItemName : TEXT("FictifSword"); // PROVISOIRE fallback
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (ASalamanderPlayerState* PS = (*It)->GetPlayerState<ASalamanderPlayerState>())
+		{
+			PS->XP += XPReward;
+			SaveProfileFor(PS); // XP recorded in the saved profile
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] reward: %s +%d XP (item %s), total XP=%d"), *PS->PlayerName, XPReward, *ItemName, PS->XP);
+		}
 	}
 }

@@ -27,7 +27,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<USalamanderAttributeSet> AttributeSet;
 
-private:
+protected:
 	enum class EEnemyState : uint8 { Idle, Chase, Warn, Dead };
 
 	EEnemyState State = EEnemyState::Idle;

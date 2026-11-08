@@ -5,6 +5,7 @@
 #include "DA_DeathRules.h"
 #include "DA_MeleeAttackStats.h"
 #include "DA_EnemyStats.h"
+#include "DA_BossStats.h"
 #include "SalamanderMaterialLib.generated.h"
 
 UCLASS()
@@ -30,5 +31,13 @@ public:
 	// Creates /Game/Data/DA_EnemyStats if missing (PROVISOIRE values).
 	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
 	static UDA_EnemyStats* EnsureEnemyStatsAsset();
+
+	// Creates /Game/Data/DA_BossStats if missing (PROVISOIRE values).
+	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
+	static UDA_BossStats* EnsureBossStatsAsset();
+
+	// Creates /Game/Data/DT_BossReward (DataTable, row Boss1) if missing.
+	UFUNCTION(BlueprintCallable, Category="Salamander|Editor")
+	static class UDataTable* EnsureBossRewardTable();
 #endif
 };

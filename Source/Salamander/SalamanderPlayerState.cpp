@@ -10,6 +10,7 @@
 ASalamanderPlayerState::ASalamanderPlayerState()
 {
 	Level = 1;
+	XP = 0;
 	ColorRgb = FLinearColor(0.8f, 0.8f, 0.8f, 1.f);
 
 	// GAS: ASC + AttributeSet on the PlayerState, Mixed replication (players).
@@ -27,6 +28,7 @@ void ASalamanderPlayerState::BeginPlay()
 	if (HasAuthority() && Level < 1)
 	{
 		Level = 1;
+	XP = 0;
 	}
 }
 
@@ -35,6 +37,7 @@ void ASalamanderPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ASalamanderPlayerState, Level);
+	DOREPLIFETIME(ASalamanderPlayerState, XP);
 	DOREPLIFETIME(ASalamanderPlayerState, PlayerName);
 	DOREPLIFETIME_CONDITION_NOTIFY(ASalamanderPlayerState, ColorRgb, COND_None, REPNOTIFY_Always);
 }
