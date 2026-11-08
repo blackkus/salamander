@@ -14,10 +14,13 @@
 #include "SalamanderGameMode.h"
 #include "Components/WidgetComponent.h"
 #include "NameTagWidget.h"
+#include "GameFramework/DamageType.h"
+#include "GameFramework/Controller.h"
 
 AEnemyCharacter::AEnemyCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	bUseControllerRotationYaw = true; // the enemy turns to face its target (set from Tick)
 	// Own ASC on the character (Minimal replication for enemies).
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
@@ -144,7 +147,12 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 		const FVector Dir = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 		// Face the target: never walk backwards toward the player.
 		const FRotator FaceRot = FRotationMatrix::MakeFromX(Dir).Rotator();
-		SetActorRotation(FMath::RInterpTo(GetActorRotation(), FaceRot, DeltaSeconds, 12.f));
+		const FRotator NewRot = FMath::RInterpTo(GetActorRotation(), FaceRot, DeltaSeconds, 12.f);
+		if (AController* C = GetController())
+		{
+			C->SetControlRotation(NewRot); // movement input is transformed by control rotation
+		}
+		SetActorRotation(NewRot);
 		AddMovementInput(Dir, 1.f);
 		break;
 	}
@@ -155,7 +163,12 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 		{
 			const FVector ToTarget = Target->GetActorLocation() - GetActorLocation();
 			const FRotator FaceRot = FRotationMatrix::MakeFromX(ToTarget.GetSafeNormal()).Rotator();
-			SetActorRotation(FMath::RInterpTo(GetActorRotation(), FaceRot, DeltaSeconds, 12.f));
+			const FRotator NewRot = FMath::RInterpTo(GetActorRotation(), FaceRot, DeltaSeconds, 12.f);
+			if (AController* C = GetController())
+			{
+				C->SetControlRotation(NewRot);
+			}
+			SetActorRotation(NewRot);
 		}
 		StateTimer -= DeltaSeconds;
 		if (StateTimer <= 0.f)
@@ -249,4 +262,10 @@ void AEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 		}
 		Destroy(); // at 0 HP the enemy disappears
 	}
+}
+
+void AEnemyCharacter::FellOutOfWorld(const UDamageType& DamageType)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Enemy] %s fell out of the world at %s -> destroyed"), *GetName(), *GetActorLocation().ToString());
+	Super::FellOutOfWorld(DamageType);
 }

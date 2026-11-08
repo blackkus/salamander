@@ -18,6 +18,7 @@ public class Salamander : ModuleRules
 			"GameplayAbilities",
 			"GameplayTags",
 			"UMG",
+			"NavigationSystem",
 			"Slate",
 			"SlateCore"
 		});

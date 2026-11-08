@@ -115,6 +115,22 @@ FReply SLoginWidget::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InK
 	return SCompoundWidget::OnKeyDown(MyGeometry, InKeyEvent);
 }
 
+FReply SLoginWidget::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& InPointerEvent)
+{
+	if (PendingSlot != NAME_None)
+	{
+		USalamanderInputLib::RebindSlot(PendingSlot, InPointerEvent.GetEffectingButton());
+		PendingSlot = NAME_None;
+		if (HintText.IsValid())
+		{
+			HintText->SetText(FText::FromString(TEXT("")));
+		}
+		RefreshSlotButtons();
+		return FReply::Handled();
+	}
+	return SCompoundWidget::OnMouseButtonDown(MyGeometry, InPointerEvent);
+}
+
 void SLoginWidget::RefreshSlotButtons()
 {
 	for (const FBindSlot& Slot : USalamanderInputLib::GetSlots())

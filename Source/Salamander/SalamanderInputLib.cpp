@@ -4,6 +4,8 @@
 #include "EnhancedInput/Public/InputAction.h"
 #include "Engine/Engine.h"
 #include "GameFramework/InputSettings.h"
+#include "UObject/SavePackage.h"
+#include "Misc/PackageName.h"
 
 #define BINDINGS_SECTION TEXT("KeyBindings")
 
@@ -145,5 +147,49 @@ void USalamanderInputLib::ApplyAllBindings()
 			Alt.Modifiers = OldMapping.Modifiers;
 			Alt.Triggers = OldMapping.Triggers;
 		}
+	}
+}
+
+void USalamanderInputLib::EnsureDefaultMappings()
+{
+	UInputMappingContext* IMC = LoadObject<UInputMappingContext>(nullptr, TEXT("/Game/Input/IMC_Default"));
+	if (IMC == nullptr)
+	{
+		return;
+	}
+	struct FDef { const TCHAR* ActionPath; FKey Key; };
+	const FDef Defs[] = {
+		{ TEXT("/Game/Input/Actions/IA_Sprint"), EKeys::LeftShift },
+		{ TEXT("/Game/Input/Actions/IA_Crouch"), EKeys::LeftControl },
+		{ TEXT("/Game/Input/Actions/IA_Attack"), EKeys::LeftMouseButton },
+	};
+	for (const FDef& D : Defs)
+	{
+		UInputAction* Action = LoadObject<UInputAction>(nullptr, D.ActionPath);
+		if (Action == nullptr)
+		{
+			continue;
+		}
+		bool bFound = false;
+		for (const FEnhancedActionKeyMapping& M : IMC->GetMappings())
+		{
+			if (M.Action == Action && M.Key == D.Key) { bFound = true; break; }
+		}
+		if (bFound)
+		{
+			continue;
+		}
+		IMC->UnmapKey(Action, D.Key);
+		FEnhancedActionKeyMapping& M = IMC->MapKey(Action, D.Key);
+		M.Triggers.Add(NewObject<UInputTriggerPressed>(IMC));
+		UE_LOG(LogTemp, Log, TEXT("[Input] baked into asset: %s -> %s"), *Action->GetName(), *D.Key.GetFName().ToString());
+	}
+	// Persist the asset so the mappings exist at load time (before any context is registered).
+	UPackage* Pkg = IMC->GetOutermost();
+	if (Pkg != nullptr)
+	{
+		Pkg->MarkPackageDirty();
+		const FString FilePath = FPackageName::LongPackageNameToFilename(TEXT("/Game/Input/IMC_Default"), FPackageName::GetAssetPackageExtension());
+		UPackage::Save(Pkg, IMC, *FilePath, FSavePackageArgs());
 	}
 }

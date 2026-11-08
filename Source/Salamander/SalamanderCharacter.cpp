@@ -113,6 +113,7 @@ ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectIniti
 void ASalamanderCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	UE_LOG(LogTemp, Log, TEXT("[Char] PossessedBy ctrl=%s localPC=%d"), NewController ? *NewController->GetName() : TEXT("null"), (NewController && NewController->IsA<APlayerController>() && Cast<APlayerController>(NewController)->GetLocalPlayer()) ? 1 : 0);
 
 	// GAS: bind the PlayerState ASC to this pawn (owner=PlayerState, avatar=pawn).
 	if (ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
@@ -139,49 +140,6 @@ void ASalamanderCharacter::PossessedBy(AController* NewController)
 		}
 	}
 
-	if (APlayerController* PC = Cast<APlayerController>(NewController))
-	{
-		if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
-		{
-			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-			{
-				if (DefaultMappingContext)
-				{
-					Subsystem->AddMappingContext(DefaultMappingContext, 0);
-
-					// Mouse look (mouse X/Y) lives in IMC_MouseLook.
-					if (MouseLookContext)
-					{
-						Subsystem->AddMappingContext(MouseLookContext, 1);
-					}
-
-					// Saved key bindings + AZERTY alt keys (WASD/ZQSD).
-					USalamanderInputLib::ApplyAllBindings();
-
-					// IA_Sprint / IA_Crouch are created by an editor script; the key mapping
-					// is added here in code (idempotent thanks to UnmapKey).
-					if (SprintAction)
-					{
-						DefaultMappingContext->UnmapKey(SprintAction, EKeys::LeftShift);
-						FEnhancedActionKeyMapping& SprintMapping = DefaultMappingContext->MapKey(SprintAction, EKeys::LeftShift);
-						SprintMapping.Triggers.Add(NewObject<UInputTriggerPressed>(DefaultMappingContext));
-					}
-					if (CrouchAction)
-					{
-						DefaultMappingContext->UnmapKey(CrouchAction, EKeys::LeftControl);
-						FEnhancedActionKeyMapping& CrouchMapping = DefaultMappingContext->MapKey(CrouchAction, EKeys::LeftControl);
-						CrouchMapping.Triggers.Add(NewObject<UInputTriggerPressed>(DefaultMappingContext));
-					}
-					if (AttackAction)
-					{
-						DefaultMappingContext->UnmapKey(AttackAction, EKeys::LeftMouseButton);
-						FEnhancedActionKeyMapping& AttackMapping = DefaultMappingContext->MapKey(AttackAction, EKeys::LeftMouseButton);
-						AttackMapping.Triggers.Add(NewObject<UInputTriggerPressed>(DefaultMappingContext));
-					}
-				}
-			}
-		}
-	}
 }
 
 void ASalamanderCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -190,6 +148,27 @@ void ASalamanderCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
+		// Local player only (SetupPlayerInputComponent runs on the owning client):
+		// register mapping contexts, saved key bindings + AZERTY alt keys.
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
+			{
+				if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+				{
+					if (DefaultMappingContext)
+					{
+						Subsystem->AddMappingContext(DefaultMappingContext, 0);
+					}
+					if (MouseLookContext)
+					{
+						Subsystem->AddMappingContext(MouseLookContext, 1);
+					}
+					USalamanderInputLib::ApplyAllBindings();
+					UE_LOG(LogTemp, Log, TEXT("[Char] input contexts added: default=%d mouse=%d"), DefaultMappingContext != nullptr ? 1 : 0, MouseLookContext != nullptr ? 1 : 0);
+				}
+			}
+		}
 		if (MoveAction)
 		{
 			EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASalamanderCharacter::Move);

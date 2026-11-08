@@ -22,6 +22,8 @@ public:
 
 	// Captures the next pressed key while a rebind is pending.
 	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override;
+	// Mouse buttons count as keys too (attack = left mouse button).
+	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& InPointerEvent) override;
 
 private:
 	FReply OnConnectClicked();

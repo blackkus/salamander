@@ -8,6 +8,7 @@
 
 class USalamanderAttributeSet;
 class UWidgetComponent;
+class UDamageType;
 
 // Simple enemy: C++ state machine (Idle / Chase / Warn / Attack), own ASC (Minimal replication).
 // No Behavior Tree. Telegraphs its attack by flashing its body color before hitting.
@@ -21,6 +22,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;

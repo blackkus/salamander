@@ -15,6 +15,7 @@
 #include "FileSaveBackend.h"
 #include "PlayerProfile.h"
 #include "SalamanderInputLib.h"
+#include "NavigationSystem.h"
 #include "SalamanderCharacter.h"
 #include "SalamanderPlayerState.h"
 #include "AbilitySystemComponent.h"
@@ -78,10 +79,18 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 			BaseLoc = It->GetActorLocation();
 			break;
 		}
+		// Project spawn points onto the navmesh so enemies never spawn off the platform edge.
+		auto ProjectToNav = [this](const FVector& InLoc) -> FVector
+		{
+			FVector Out = InLoc;
+			UNavigationSystemV1::K2_ProjectPointToNavigation(GetWorld(), InLoc, Out, nullptr, nullptr, FVector(400.f));
+			return Out;
+		};
 		for (int32 i = 0; i < EnemyCount; i++)
 		{
-			const FVector Loc = BaseLoc + FVector(250.f * (i + 1), 250.f * i, 0.f);
+			const FVector Loc = ProjectToNav(BaseLoc + FVector(250.f * (i + 1), 250.f * i, 0.f));
 			GetWorld()->SpawnActor<AEnemyCharacter>(AEnemyCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned enemy %d at %s"), i, *Loc.ToString());
 		}
 		UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d enemies"), EnemyCount);
 
@@ -90,8 +99,9 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 		FParse::Value(FCommandLine::Get(), TEXT("BossCount="), BossCount);
 		for (int32 i = 0; i < BossCount; i++)
 		{
-			const FVector Loc = BaseLoc + FVector(900.f, 500.f, 0.f);
+			const FVector Loc = ProjectToNav(BaseLoc + FVector(900.f, 500.f, 0.f));
 			GetWorld()->SpawnActor<ABossCharacter>(ABossCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned boss at %s"), *Loc.ToString());
 		}
 		if (BossCount > 0)
 		{

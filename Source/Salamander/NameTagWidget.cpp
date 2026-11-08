@@ -2,6 +2,7 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "UObject/UObjectGlobals.h"
+#include "Engine/Texture2D.h"
 
 #include "Components/WidgetComponent.h"
 #include "Components/VerticalBox.h"
@@ -33,9 +34,17 @@ UNameTagWidget::UNameTagWidget(const FObjectInitializer& ObjectInitializer)
 
 	HealthBar = NewObject<UProgressBar>(Box, TEXT("HealthBar"));
 	HealthBar->SetPercent(1.f);
-	HealthBar->WidgetStyle.BackgroundImage.TintColor = FLinearColor(0.f, 0.f, 0.f, 0.55f);
-	HealthBar->WidgetStyle.FillImage.TintColor = FLinearColor(0.15f, 0.85f, 0.2f, 1.f);
-	HealthBar->SetFillColorAndOpacity(FLinearColor(0.15f, 0.85f, 0.2f, 1.f));
+	// Solid white brush so the tints actually render (default style brushes can be empty in game).
+	static UTexture2D* WhiteTex = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture"));
+	FSlateBrush WhiteBrush;
+	WhiteBrush.SetResourceObject(WhiteTex);
+	WhiteBrush.TintColor = FLinearColor::White;
+	HealthBar->WidgetStyle.FillImage = WhiteBrush;
+	HealthBar->WidgetStyle.BackgroundImage = WhiteBrush;
+	// red background = the HP already lost, green fill = current HP
+	HealthBar->WidgetStyle.BackgroundImage.TintColor = FLinearColor(0.75f, 0.05f, 0.05f, 0.9f);
+	HealthBar->WidgetStyle.FillImage.TintColor = FLinearColor(0.1f, 0.8f, 0.15f, 1.f);
+	HealthBar->SetFillColorAndOpacity(FLinearColor(0.1f, 0.8f, 0.15f, 1.f));
 	Box->AddChild(HealthBar);
 
 	WidgetTree->RootWidget = Box;
@@ -54,9 +63,8 @@ void UNameTagWidget::SetHealthFraction(float Fraction)
 	if (HealthBar != nullptr)
 	{
 		HealthBar->SetPercent(FMath::Clamp(Fraction, 0.f, 1.f));
-		// red when low
-		const FLinearColor C = Fraction > 0.5f ? FLinearColor(0.15f, 0.85f, 0.2f, 1.f)
-			: (Fraction > 0.25f ? FLinearColor(0.95f, 0.75f, 0.1f, 1.f) : FLinearColor(0.9f, 0.1f, 0.1f, 1.f));
+		// fill stays green (current HP); the red background shows the missing part
+		const FLinearColor C = FLinearColor(0.1f, 0.8f, 0.15f, 1.f);
 		HealthBar->SetFillColorAndOpacity(C);
 		HealthBar->WidgetStyle.FillImage.TintColor = C;
 	}

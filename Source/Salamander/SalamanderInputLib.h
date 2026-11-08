@@ -46,4 +46,9 @@ public:
 
 	// Applies all saved bindings + AZERTY alt keys to IMC_Default. Idempotent. Client side.
 	static void ApplyAllBindings();
+
+	// Bakes the default Sprint/Crouch/Attack mappings into the IMC_Default asset itself
+	// (editor commandlet, CallInEditor). Idempotent.
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Input")
+	static void EnsureDefaultMappings();
 };
