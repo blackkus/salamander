@@ -27,7 +27,7 @@ ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<USalamanderCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true; // the body turns with the mouse (camera boom follows control rotation)
 	bUseControllerRotationRoll = false;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -237,6 +237,16 @@ void ASalamanderCharacter::Look(const FInputActionValue& Value)
 		return;
 	}
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
+	if (FMath::Abs(LookAxisVector.X) > 0.01f || FMath::Abs(LookAxisVector.Y) > 0.01f)
+	{
+		static float LastLookLog = 0.f;
+		const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+		if (Now - LastLookLog > 0.5f)
+		{
+			LastLookLog = Now;
+			UE_LOG(LogTemp, Log, TEXT("[Input] look axis %.2f %.2f"), LookAxisVector.X, LookAxisVector.Y);
+		}
+	}
 
 	if (Controller != nullptr)
 	{
@@ -247,6 +257,7 @@ void ASalamanderCharacter::Look(const FInputActionValue& Value)
 
 void ASalamanderCharacter::StartSprint()
 {
+	UE_LOG(LogTemp, Log, TEXT("[Input] sprint ON"));
 	if (IsDead())
 	{
 		return;
@@ -263,6 +274,7 @@ void ASalamanderCharacter::StartSprint()
 
 void ASalamanderCharacter::StopSprint()
 {
+	UE_LOG(LogTemp, Log, TEXT("[Input] sprint OFF"));
 	if (IsDead())
 	{
 		return;
@@ -287,6 +299,7 @@ void ASalamanderCharacter::ServerSetSprinting_Implementation(bool bSprint)
 
 void ASalamanderCharacter::StartCrouch()
 {
+	UE_LOG(LogTemp, Log, TEXT("[Input] crouch ON"));
 	if (IsDead())
 	{
 		return;
@@ -296,6 +309,7 @@ void ASalamanderCharacter::StartCrouch()
 
 void ASalamanderCharacter::StopCrouch()
 {
+	UE_LOG(LogTemp, Log, TEXT("[Input] crouch OFF"));
 	if (IsDead())
 	{
 		return;
@@ -369,6 +383,13 @@ void ASalamanderCharacter::Tick(float DeltaSeconds)
 	if (NameTagComponent != nullptr)
 	{
 		UNameTagWidget::UpdateNameTag(NameTagComponent, GetDisplayName(), GetHealthFraction(), GetWorld());
+	}
+	// Visible crouch feedback (no anim blueprint yet): squash the mesh.
+	if (USkeletalMeshComponent* M = GetMesh())
+	{
+		const float TargetZ = GetCharacterMovement() != nullptr && GetCharacterMovement()->IsCrouching() ? 0.55f : 1.f;
+		const float CurZ = M->GetRelativeScale3D().Z;
+		M->SetRelativeScale3D(FVector(1.f, 1.f, FMath::FInterpTo(CurZ, TargetZ, DeltaSeconds, 10.f)));
 	}
 }
 

@@ -16,6 +16,8 @@
 #include "PlayerProfile.h"
 #include "SalamanderInputLib.h"
 #include "NavigationSystem.h"
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "SalamanderCharacter.h"
 #include "SalamanderPlayerState.h"
 #include "AbilitySystemComponent.h"
@@ -121,6 +123,13 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 
 void ASalamanderGameMode::ShowLoginMenu()
 {
+	// The menu needs the mouse cursor (-game hides it by default).
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		PC->bShowMouseCursor = true;
+		FInputModeUIOnly InputMode;
+		PC->SetInputMode(InputMode);
+	}
 	if (GEngine == nullptr || GEngine->GameViewport == nullptr || LoginWidget.IsValid())
 	{
 		return;
