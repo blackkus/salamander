@@ -21,4 +21,4 @@ set MAP=/Game/Maps/World_Test
 set PORT=7777
 
 echo Starting dedicated server: map %MAP%, UDP port %PORT%
-"%EDITOR_EXE%" "%PROJECT%" -server -game -log -PORT=%PORT% "%MAP%?listen"
+"%EDITOR_EXE%" "%PROJECT%" -server -game -log -PORT=%PORT% "%MAP%?listen" -EnemyCount=2 -BossCount=1

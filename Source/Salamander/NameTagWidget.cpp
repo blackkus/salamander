@@ -27,7 +27,7 @@ UNameTagWidget::UNameTagWidget(const FObjectInitializer& ObjectInitializer)
 	NameText->SetShadowOffset(FVector2D(1.f, 1.f));
 	NameText->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.9f));
 	FSlateFontInfo NameFont = NameText->GetFont();
-	NameFont.Size = 18;
+	NameFont.Size = 13;
 	NameText->SetFont(NameFont);
 	Box->AddChild(NameText);
 
@@ -73,8 +73,8 @@ UWidgetComponent* UNameTagWidget::CreateNameTagComponent(AActor* Owner)
 	Comp->SetupAttachment(AttachRoot);
 	Comp->SetWidgetSpace(EWidgetSpace::World);
 	Comp->SetWidgetClass(UNameTagWidget::StaticClass());
-	Comp->SetRelativeLocation(FVector(0.f, 0.f, 110.f));
-	Comp->SetDrawSize(FVector2D(180.f, 36.f));
+	Comp->SetRelativeLocation(FVector(0.f, 0.f, 175.f));
+	Comp->SetDrawSize(FVector2D(130.f, 22.f));
 	Comp->SetDrawAtDesiredSize(true);
 	Comp->SetPivot(FVector2D(0.5f, 0.f));
 	Comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
