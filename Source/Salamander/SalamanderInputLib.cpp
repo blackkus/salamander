@@ -4,10 +4,17 @@
 #include "EnhancedInput/Public/InputAction.h"
 #include "Engine/Engine.h"
 #include "GameFramework/InputSettings.h"
+#include "Misc/Paths.h"
 #include "UObject/SavePackage.h"
 #include "Misc/PackageName.h"
 
 #define BINDINGS_SECTION TEXT("KeyBindings")
+// Fixed-path ini so the menu process and the game process always agree (independent of Windows/WindowsEditor flavor).
+static const FString& KeyBindingsIni()
+{
+	static const FString Path = FPaths::ProjectSavedDir() / TEXT("Config/KeyBindings.ini");
+	return Path;
+}
 
 static const FString IMC_PATH = TEXT("/Game/Input/IMC_Default");
 
@@ -44,7 +51,7 @@ const TArray<FBindSlot>& USalamanderInputLib::GetSlots()
 FKey USalamanderInputLib::GetBoundKey(const FBindSlot& Slot)
 {
 	FString Saved;
-	if (GConfig != nullptr && GConfig->GetString(BINDINGS_SECTION, *Slot.Slot.ToString(), Saved, GGameUserSettingsIni) && !Saved.IsEmpty())
+	if (GConfig != nullptr && GConfig->GetString(BINDINGS_SECTION, *Slot.Slot.ToString(), Saved, KeyBindingsIni()) && !Saved.IsEmpty())
 	{
 		const FKey K(*Saved);
 		if (K.IsValid())
@@ -86,27 +93,37 @@ void USalamanderInputLib::RebindSlot(const FName& SlotName, const FKey& NewKey)
 		}
 		UInputMappingContext* IMC = LoadObject<UInputMappingContext>(nullptr, *IMC_PATH);
 		UInputAction* Action = LoadObject<UInputAction>(nullptr, *Slot.ActionPath);
-		const FKey OldKey = GetBoundKey(Slot);
-		if (IMC == nullptr || Action == nullptr || OldKey == NewKey)
+		if (IMC == nullptr || Action == nullptr)
 		{
 			return;
+		}
+		FEnhancedActionKeyMapping ExistingNew;
+		if (FindMapping(IMC, Action, NewKey, ExistingNew))
+		{
+			return; // new key already mapped
 		}
 		FEnhancedActionKeyMapping OldMapping;
-		if (!FindMapping(IMC, Action, OldKey, OldMapping))
+		FKey FromKey = Slot.DefaultKey;
+		if (!FindMapping(IMC, Action, FromKey, OldMapping))
 		{
-			return;
+			// default key already rebound earlier: use the currently bound key
+			FromKey = GetBoundKey(Slot);
+			if (!FindMapping(IMC, Action, FromKey, OldMapping))
+			{
+				return;
+			}
 		}
-		IMC->UnmapKey(Action, OldKey);
+		IMC->UnmapKey(Action, FromKey);
 		FEnhancedActionKeyMapping& NewMapping = IMC->MapKey(Action, NewKey);
 		NewMapping.Modifiers = OldMapping.Modifiers;
 		NewMapping.Triggers = OldMapping.Triggers;
 
 		if (GConfig != nullptr)
 		{
-			GConfig->SetString(BINDINGS_SECTION, *SlotName.ToString(), *NewKey.GetFName().ToString(), GGameUserSettingsIni);
-			GConfig->Flush(false, GGameUserSettingsIni);
+			GConfig->SetString(BINDINGS_SECTION, *SlotName.ToString(), *NewKey.GetFName().ToString(), KeyBindingsIni());
+			GConfig->Flush(false, KeyBindingsIni());
 		}
-		UE_LOG(LogTemp, Log, TEXT("[Input] rebound %s: %s -> %s"), *SlotName.ToString(), *OldKey.GetFName().ToString(), *NewKey.GetFName().ToString());
+		UE_LOG(LogTemp, Log, TEXT("[Input] rebound %s: %s -> %s"), *SlotName.ToString(), *FromKey.GetFName().ToString(), *NewKey.GetFName().ToString());
 		return;
 	}
 }
@@ -122,6 +139,7 @@ void USalamanderInputLib::ApplyAllBindings()
 	for (const FBindSlot& Slot : GetSlots())
 	{
 		const FKey Bound = GetBoundKey(Slot);
+		UE_LOG(LogTemp, Log, TEXT("[Input] slot %s bound=%s default=%s"), *Slot.Slot.ToString(), *Bound.GetFName().ToString(), *Slot.DefaultKey.GetFName().ToString());
 		if (Bound != Slot.DefaultKey)
 		{
 			RebindSlot(Slot.Slot, Bound);

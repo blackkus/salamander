@@ -17,6 +17,7 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "TimerManager.h"
+#include "GameFramework/PlayerController.h"
 #include "Components/WidgetComponent.h"
 #include "NameTagWidget.h"
 #include "SalamanderInputLib.h"
@@ -166,6 +167,11 @@ void ASalamanderCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 					}
 					USalamanderInputLib::ApplyAllBindings();
 					UE_LOG(LogTemp, Log, TEXT("[Char] input contexts added: default=%d mouse=%d"), DefaultMappingContext != nullptr ? 1 : 0, MouseLookContext != nullptr ? 1 : 0);
+
+					// Capture the mouse and hide the cursor so mouse-look deltas reach the game.
+					PC->bShowMouseCursor = false;
+					FInputModeGameOnly InputMode;
+					PC->SetInputMode(InputMode);
 				}
 			}
 		}

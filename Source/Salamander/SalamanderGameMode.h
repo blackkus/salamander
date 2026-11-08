@@ -23,6 +23,9 @@ public:
 	void HideLoginMenu();
 	void ConnectToServer(const FString& Ip, const FString& Nick, const FString& Color);
 
+	// Spawns enemies + boss on random navigable points (called 3 s after InitGame, server only).
+	void SpawnEnemiesAndBoss();
+
 	// Server console commands.
 	UFUNCTION(Exec)
 	void DebugDamage(int32 Amount);

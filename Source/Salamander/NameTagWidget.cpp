@@ -35,9 +35,9 @@ UNameTagWidget::UNameTagWidget(const FObjectInitializer& ObjectInitializer)
 	HealthBar = NewObject<UProgressBar>(Box, TEXT("HealthBar"));
 	HealthBar->SetPercent(1.f);
 	// Solid white brush so the tints actually render (default style brushes can be empty in game).
-	static UTexture2D* WhiteTex = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture"));
+	static ConstructorHelpers::FObjectFinder<UTexture2D> WhiteTexAsset(TEXT("/Engine/EngineResources/WhiteSquareTexture"));
 	FSlateBrush WhiteBrush;
-	WhiteBrush.SetResourceObject(WhiteTex);
+	WhiteBrush.SetResourceObject(WhiteTexAsset.Succeeded() ? WhiteTexAsset.Object : nullptr);
 	WhiteBrush.TintColor = FLinearColor::White;
 	HealthBar->WidgetStyle.FillImage = WhiteBrush;
 	HealthBar->WidgetStyle.BackgroundImage = WhiteBrush;

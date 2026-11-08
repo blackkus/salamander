@@ -68,45 +68,11 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 	// Death rules data asset (PLACEHOLDER values).
 	DeathRules = LoadObject<UDA_DeathRules>(nullptr, TEXT("/Game/Data/DA_DeathRules"));
 
-	// Spawn simple enemies (server only). Count via -EnemyCount=<n> (default 2).
+	// Spawn simple enemies + boss (server only), delayed so the navmesh is built first.
 	if (GetWorld()->GetNetMode() != NM_Client)
 	{
-		int32 EnemyCount = 2;
-		FParse::Value(FCommandLine::Get(), TEXT("EnemyCount="), EnemyCount);
-		FVector BaseLoc = FVector::ZeroVector;
-		for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
-		{
-			BaseLoc = It->GetActorLocation();
-			break;
-		}
-		// Project spawn points onto the navmesh so enemies never spawn off the platform edge.
-		auto ProjectToNav = [this](const FVector& InLoc) -> FVector
-		{
-			FVector Out = InLoc;
-			UNavigationSystemV1::K2_ProjectPointToNavigation(GetWorld(), InLoc, Out, nullptr, nullptr, FVector(400.f));
-			return Out;
-		};
-		for (int32 i = 0; i < EnemyCount; i++)
-		{
-			const FVector Loc = ProjectToNav(BaseLoc + FVector(250.f * (i + 1), 250.f * i, 0.f));
-			GetWorld()->SpawnActor<AEnemyCharacter>(AEnemyCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
-			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned enemy %d at %s"), i, *Loc.ToString());
-		}
-		UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d enemies"), EnemyCount);
-
-		// One boss further away (-BossCount=<n>, default 1).
-		int32 BossCount = 1;
-		FParse::Value(FCommandLine::Get(), TEXT("BossCount="), BossCount);
-		for (int32 i = 0; i < BossCount; i++)
-		{
-			const FVector Loc = ProjectToNav(BaseLoc + FVector(900.f, 500.f, 0.f));
-			GetWorld()->SpawnActor<ABossCharacter>(ABossCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
-			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned boss at %s"), *Loc.ToString());
-		}
-		if (BossCount > 0)
-		{
-			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d boss"), BossCount);
-		}
+		FTimerHandle SpawnHandle;
+		GetWorldTimerManager().SetTimer(SpawnHandle, this, &ASalamanderGameMode::SpawnEnemiesAndBoss, 3.f, false);
 	}
 
 	// Periodic save every 60 s.
@@ -508,3 +474,46 @@ void ASalamanderGameMode::OnBossKilled(ABossCharacter* Boss)
 		}
 	}
 }
+
+void ASalamanderGameMode::SpawnEnemiesAndBoss()
+{
+	if (GetWorld() == nullptr || GetWorld()->GetNetMode() == NM_Client)
+	{
+		return;
+	}
+		int32 EnemyCount = 2;
+		FParse::Value(FCommandLine::Get(), TEXT("EnemyCount="), EnemyCount);
+		FVector BaseLoc = FVector::ZeroVector;
+		for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+		{
+			BaseLoc = It->GetActorLocation();
+			break;
+		}
+		// Spawn on random NAVIGABLE points near the player start: enemies never spawn off the platform.
+		auto RandomNavPoint = [this, BaseLoc](float Radius) -> FVector
+		{
+			FVector Out = BaseLoc;
+			UNavigationSystemV1::K2_GetRandomPointInNavigableRadius(GetWorld(), BaseLoc, Out, Radius);
+			return Out; // no navmesh: stays at the player start
+		};
+		for (int32 i = 0; i < EnemyCount; i++)
+		{
+			const FVector Loc = RandomNavPoint(400.f + 150.f * i);
+			GetWorld()->SpawnActor<AEnemyCharacter>(AEnemyCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned enemy %d at %s"), i, *Loc.ToString());
+		}
+		UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d enemies"), EnemyCount);
+
+		// One boss further away (-BossCount=<n>, default 1).
+		int32 BossCount = 1;
+		FParse::Value(FCommandLine::Get(), TEXT("BossCount="), BossCount);
+		for (int32 i = 0; i < BossCount; i++)
+		{
+			const FVector Loc = RandomNavPoint(900.f);
+			GetWorld()->SpawnActor<ABossCharacter>(ABossCharacter::StaticClass(), Loc, FRotator::ZeroRotator);
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned boss at %s"), *Loc.ToString());
+		}
+		if (BossCount > 0)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[GameMode] spawned %d boss"), BossCount);
+		}}
