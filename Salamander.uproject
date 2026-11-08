@@ -1,19 +1,19 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{06F3E561-4717-676B-F2C5-0E946A0D7942}",
+	"EngineAssociation": "5.8",
 	"Category": "",
 	"Description": "",
+	"Modules": [
+		{
+			"Name": "Salamander",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
 	"Plugins": [
 		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
 		}
-	],
-	"Modules": [
-		{
-			"Name": "Salamander",
-			"Type": "Runtime",
-			"Phase": "Default"
-		}
 	]
-}
+}

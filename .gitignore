@@ -13,3 +13,8 @@ Binaries/
 DerivedDataCache/
 Intermediate/
 Saved/
+
+# Editor-generated
+.vs/
+.vsconfig
+*.slnx
