@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+; Maps the Salamander.uproject EngineAssociation GUID to C:\Games\UE_5.8 so that
+; double-clicking the .uproject launches the right editor (no "unknown editor version").
+; Run once per machine (or run Scripts/RegisterEngineBuild.py).
+
+[HKEY_CURRENT_USER\SOFTWARE\Epic Games\Unreal Engine\Builds\{06F3E561-4717-676B-F2C5-0E946A0D7942}]
+@="C:\\Games\\UE_5.8"
