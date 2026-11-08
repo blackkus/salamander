@@ -14,6 +14,7 @@
 #include "Misc/Parse.h"
 #include "FileSaveBackend.h"
 #include "PlayerProfile.h"
+#include "SalamanderInputLib.h"
 #include "SalamanderCharacter.h"
 #include "SalamanderPlayerState.h"
 #include "AbilitySystemComponent.h"
@@ -127,6 +128,7 @@ void ASalamanderGameMode::InitGame(const FString& MapName, const FString& Option
 	if (GetWorld()->GetNetMode() != NM_DedicatedServer && MapName.Contains(TEXT("Menu")))
 	{
 		DefaultPawnClass = nullptr;
+		USalamanderInputLib::ApplyAllBindings();
 		ShowLoginMenu();
 
 		// CLI test: -ConnectTo=127.0.0.1 -ConnectNick=Bob -ConnectColor=FF8800 -> auto-connect without click.

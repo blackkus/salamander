@@ -17,6 +17,10 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "TimerManager.h"
+#include "Components/WidgetComponent.h"
+#include "NameTagWidget.h"
+#include "SalamanderInputLib.h"
+#include "SalamanderAttributeSet.h"
 
 ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<USalamanderCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -55,6 +59,12 @@ ASalamanderCharacter::ASalamanderCharacter(const FObjectInitializer& ObjectIniti
 	if (IMCAsset.Succeeded())
 	{
 		DefaultMappingContext = IMCAsset.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext> MouseIMCAsset(TEXT("/Game/Input/IMC_MouseLook"));
+	if (MouseIMCAsset.Succeeded())
+	{
+		MouseLookContext = MouseIMCAsset.Object;
 	}
 
 	static ConstructorHelpers::FObjectFinder<UInputAction> MoveAsset(TEXT("/Game/Input/Actions/IA_Move"));
@@ -138,6 +148,15 @@ void ASalamanderCharacter::PossessedBy(AController* NewController)
 				if (DefaultMappingContext)
 				{
 					Subsystem->AddMappingContext(DefaultMappingContext, 0);
+
+					// Mouse look (mouse X/Y) lives in IMC_MouseLook.
+					if (MouseLookContext)
+					{
+						Subsystem->AddMappingContext(MouseLookContext, 1);
+					}
+
+					// Saved key bindings + AZERTY alt keys (WASD/ZQSD).
+					USalamanderInputLib::ApplyAllBindings();
 
 					// IA_Sprint / IA_Crouch are created by an editor script; the key mapping
 					// is added here in code (idempotent thanks to UnmapKey).
@@ -316,6 +335,9 @@ void ASalamanderCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Overhead name tag + health bar (created on every client).
+	NameTagComponent = UNameTagWidget::CreateNameTagComponent(this);
+
 	// CLI tests (client only): auto play sprint / crouch after connecting.
 	if (!HasAuthority())
 	{
@@ -359,6 +381,36 @@ void ASalamanderCharacter::Tick(float DeltaSeconds)
 		UE_LOG(LogTemp, Log, TEXT("[Char] %s dead-tag %s"), *GetName(), bDead ? TEXT("ON") : TEXT("OFF"));
 		bWasDead = bDead;
 	}
+	if (NameTagComponent != nullptr)
+	{
+		UNameTagWidget::UpdateNameTag(NameTagComponent, GetDisplayName(), GetHealthFraction(), GetWorld());
+	}
+}
+
+FString ASalamanderCharacter::GetDisplayName() const
+{
+	if (const ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
+	{
+		return PS->PlayerName;
+	}
+	return TEXT("?");
+}
+
+float ASalamanderCharacter::GetHealthFraction() const
+{
+	if (const ASalamanderPlayerState* PS = GetPlayerState<ASalamanderPlayerState>())
+	{
+		if (const UAbilitySystemComponent* ASC = PS->GetASC())
+		{
+			if (const USalamanderAttributeSet* AS = Cast<USalamanderAttributeSet>(ASC->GetAttributeSet(USalamanderAttributeSet::StaticClass())))
+			{
+				const float H = AS->GetHealth();
+				const float M = AS->GetMaxHealth();
+				return M > 0.f ? H / M : 1.f;
+			}
+		}
+	}
+	return 1.f;
 }
 
 bool ASalamanderCharacter::IsDead() const

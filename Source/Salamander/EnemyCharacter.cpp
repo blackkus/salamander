@@ -12,6 +12,8 @@
 #include "SalamanderAttributeSet.h"
 #include "BossCharacter.h"
 #include "SalamanderGameMode.h"
+#include "Components/WidgetComponent.h"
+#include "NameTagWidget.h"
 
 AEnemyCharacter::AEnemyCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -44,6 +46,9 @@ AEnemyCharacter::AEnemyCharacter(const FObjectInitializer& ObjectInitializer)
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Overhead name tag + health bar (created on every client).
+	NameTagComponent = UNameTagWidget::CreateNameTagComponent(this);
 
 	if (HasAuthority())
 	{
@@ -91,6 +96,12 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// Name tag on every machine.
+	if (NameTagComponent != nullptr)
+	{
+		UNameTagWidget::UpdateNameTag(NameTagComponent, GetDisplayName(), GetHealthFraction(), GetWorld());
+	}
+
 	if (!HasAuthority())
 	{
 		return;
@@ -131,11 +142,21 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 		}
 		// Chase directly (no navmesh yet) toward the nearest player.
 		const FVector Dir = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+		// Face the target: never walk backwards toward the player.
+		const FRotator FaceRot = FRotationMatrix::MakeFromX(Dir).Rotator();
+		SetActorRotation(FMath::RInterpTo(GetActorRotation(), FaceRot, DeltaSeconds, 12.f));
 		AddMovementInput(Dir, 1.f);
 		break;
 	}
 
 	case EEnemyState::Warn:
+		// Keep facing the target during the telegraph.
+		if (Target != nullptr)
+		{
+			const FVector ToTarget = Target->GetActorLocation() - GetActorLocation();
+			const FRotator FaceRot = FRotationMatrix::MakeFromX(ToTarget.GetSafeNormal()).Rotator();
+			SetActorRotation(FMath::RInterpTo(GetActorRotation(), FaceRot, DeltaSeconds, 12.f));
+		}
 		StateTimer -= DeltaSeconds;
 		if (StateTimer <= 0.f)
 		{
@@ -153,6 +174,17 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 	case EEnemyState::Dead:
 		break;
 	}
+}
+
+float AEnemyCharacter::GetHealthFraction() const
+{
+	if (AttributeSet != nullptr)
+	{
+		const float H = AttributeSet->GetHealth();
+		const float M = AttributeSet->GetMaxHealth();
+		return M > 0.f ? H / M : 1.f;
+	}
+	return 1.f;
 }
 
 AActor* AEnemyCharacter::FindNearestPlayer() const

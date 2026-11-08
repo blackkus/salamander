@@ -9,6 +9,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UWidgetComponent;
 
 UCLASS()
 class SALAMANDER_API ASalamanderCharacter : public ACharacter
@@ -44,6 +45,12 @@ class SALAMANDER_API ASalamanderCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input", meta=(AllowPrivateAccess="true"))
 	UInputAction* AttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input", meta=(AllowPrivateAccess="true"))
+	UInputMappingContext* MouseLookContext;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI", meta=(AllowPrivateAccess="true"))
+	UWidgetComponent* NameTagComponent;
 
 public:
 	ASalamanderCharacter(const FObjectInitializer& ObjectInitializer);
@@ -86,4 +93,9 @@ public:
 
 	// Activates the melee attack ability (tag Ability.MeleeAttack).
 	void TryMeleeAttack();
+
+	// Overhead name tag: nick from PlayerState.
+	FString GetDisplayName() const;
+	// Health fraction [0,1] from the PlayerState ASC.
+	float GetHealthFraction() const;
 };

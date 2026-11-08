@@ -17,6 +17,8 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 
+	virtual FString GetDisplayName() const override { return TEXT("Boss"); }
+
 private:
 	int32 AttackCount = 0; // alternates light attack / slam
 	void DoSlam();

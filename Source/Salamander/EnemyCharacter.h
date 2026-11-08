@@ -7,6 +7,7 @@
 #include "EnemyCharacter.generated.h"
 
 class USalamanderAttributeSet;
+class UWidgetComponent;
 
 // Simple enemy: C++ state machine (Idle / Chase / Warn / Attack), own ASC (Minimal replication).
 // No Behavior Tree. Telegraphs its attack by flashing its body color before hitting.
@@ -27,6 +28,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<USalamanderAttributeSet> AttributeSet;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> NameTagComponent;
+
 protected:
 	enum class EEnemyState : uint8 { Idle, Chase, Warn, Dead };
 
@@ -38,4 +42,10 @@ protected:
 	void SetBodyColor(const FLinearColor& Color);
 	void DoAttackHit(AActor* Target);
 	void OnHealthChanged(const FOnAttributeChangeData& Data);
+
+public:
+	// Overhead name tag label ("Enemy", boss overrides to "Boss").
+	virtual FString GetDisplayName() const { return TEXT("Enemy"); }
+	// Health fraction [0,1] from the own ASC.
+	float GetHealthFraction() const;
 };
